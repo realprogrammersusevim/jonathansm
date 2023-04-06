@@ -1,4 +1,5 @@
-# realprogrammersusevim.github.io
+# jonathansm.dev
 
-This is where I'm writing my little personal public website. I don't have much
-of an idea what I'm going to put here. For now, it's small and super ugly.
+This is where I'm writing my little personal public website. For now I use it
+for Nostr verification and a little about page, a showcase of some of my
+projects, and a list of ways to contact me.
