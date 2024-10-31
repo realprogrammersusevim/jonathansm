@@ -20,12 +20,13 @@ async fn main() {
     dotenvy::dotenv().ok();
     let pool = SqlitePool::connect(&env::var("DATABASE_URL").expect("No DATABASE_URL set"))
         .await
-        .unwrap();
+        .expect("Couldn't connect to database");
     let state = AppState { pool };
 
     let app = Router::new()
         .route("/", get(main_page))
         .route("/about", get(about))
+        .route("/contact", get(contact))
         .route("/post/:id", get(post))
         .with_state(state);
 
@@ -34,7 +35,7 @@ async fn main() {
         &env::var("PORT").expect("No PORT set")
     ))
     .await
-    .unwrap();
+    .expect("Failed to bind port");
     axum::serve(listener, app).await.unwrap();
 }
 
@@ -98,21 +99,40 @@ async fn main_page(app: State<AppState>) -> impl IntoResponse {
     HtmlTemplate(template)
 }
 
-async fn about(app: State<AppState>) -> impl IntoResponse {
-    let about = sqlx::query_as!(
+async fn get_special(id: &str, app: State<AppState>) -> Result<Post, sqlx::Error> {
+    sqlx::query_as!(
         Post,
         r#"
         SELECT id, title, date, content
         FROM special
         WHERE id = ?
         "#,
-        "about"
+        id
     )
     .fetch_one(&app.pool)
     .await
-    .unwrap();
+}
 
-    HtmlTemplate(about)
+async fn about(app: State<AppState>) -> impl IntoResponse {
+    match get_special("about", app).await {
+        Ok(about) => HtmlTemplate(about).into_response(),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to fetch about page",
+        )
+            .into_response(),
+    }
+}
+
+async fn contact(app: State<AppState>) -> impl IntoResponse {
+    match get_special("contact", app).await {
+        Ok(contact) => HtmlTemplate(contact).into_response(),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to fetch contact page",
+        )
+            .into_response(),
+    }
 }
 
 async fn post(Path(id): Path<String>, app: State<AppState>) -> impl IntoResponse {
