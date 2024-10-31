@@ -25,6 +25,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(main_page))
+        .route("/about", get(about))
         .route("/post/:id", get(post))
         .with_state(state);
 
@@ -95,6 +96,10 @@ async fn main_page(app: State<AppState>) -> impl IntoResponse {
         posts,
     };
     HtmlTemplate(template)
+}
+
+async fn about(app: State<AppState>) -> impl IntoResponse {
+    post(Path("about".to_string()), app).await
 }
 
 async fn post(Path(id): Path<String>, app: State<AppState>) -> impl IntoResponse {
