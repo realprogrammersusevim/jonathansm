@@ -99,7 +99,20 @@ async fn main_page(app: State<AppState>) -> impl IntoResponse {
 }
 
 async fn about(app: State<AppState>) -> impl IntoResponse {
-    post(Path("about".to_string()), app).await
+    let about = sqlx::query_as!(
+        Post,
+        r#"
+        SELECT id, title, date, content
+        FROM special
+        WHERE id = ?
+        "#,
+        "about"
+    )
+    .fetch_one(&app.pool)
+    .await
+    .unwrap();
+
+    HtmlTemplate(about)
 }
 
 async fn post(Path(id): Path<String>, app: State<AppState>) -> impl IntoResponse {
