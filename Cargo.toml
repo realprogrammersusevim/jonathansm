@@ -1,0 +1,12 @@
+[package]
+name = "jonathansm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+askama = "0.12.1"
+axum = "0.7.7"
+dotenvy = "0.15.7"
+rust-embed = "8.5.0"
+sqlx = { version = "0.8.2", features = ["runtime-tokio", "sqlite"] }
+tokio = { version = "1.41.0", features = ["full"] }
