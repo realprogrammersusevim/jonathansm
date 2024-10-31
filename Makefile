@@ -24,4 +24,4 @@ clean:
 
 deploy:
 	rsync -avzP $(BUILD_DIR)/$(BIN_NAME) $(DEPLOY_SERVER):$(DEPLOY_PATH)$(BIN_NAME)
-	ssh -t "$(DEPLOY_SERVER)" "sudo systemctl restart website"
+	ssh -t "$(DEPLOY_SERVER)" "sudo systemctl restart $(BIN_NAME)"
