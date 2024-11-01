@@ -45,6 +45,7 @@ struct Post {
     id: String,
     title: String,
     date: String,
+    updated: Option<String>,
     content: String,
 }
 
@@ -82,7 +83,7 @@ async fn main_page(app: State<AppState>) -> impl IntoResponse {
     let posts = sqlx::query_as!(
         Post,
         r#"
-        SELECT id, title, date, content
+        SELECT id, title, date, content, updated
         FROM posts
         ORDER BY date DESC
         LIMIT 5
@@ -103,7 +104,7 @@ async fn get_special(id: &str, app: State<AppState>) -> Result<Post, sqlx::Error
     sqlx::query_as!(
         Post,
         r#"
-        SELECT id, title, date, content
+        SELECT id, title, date, updated, content
         FROM special
         WHERE id = ?
         "#,
@@ -139,7 +140,7 @@ async fn post(Path(id): Path<String>, app: State<AppState>) -> impl IntoResponse
     let post = sqlx::query_as!(
         Post,
         r#"
-        SELECT id, title, date, content
+        SELECT id, title, date, updated, content
         FROM posts
         WHERE id = ?
         "#,
