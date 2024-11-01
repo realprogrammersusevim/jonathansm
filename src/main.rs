@@ -20,6 +20,10 @@ struct AppState {
 #[folder = "static/"]
 struct Static;
 
+#[derive(RustEmbed, Clone)]
+#[folder = ".well-known/"]
+struct WellKnown;
+
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
@@ -29,6 +33,12 @@ async fn main() {
     let state = AppState { pool };
 
     let static_files = axum_embed::ServeEmbed::<Static>::with_parameters(
+        None,
+        axum_embed::FallbackBehavior::NotFound,
+        None,
+    );
+
+    let well_known = axum_embed::ServeEmbed::<WellKnown>::with_parameters(
         Some("404.html".to_owned()),
         axum_embed::FallbackBehavior::NotFound,
         None,
@@ -41,6 +51,7 @@ async fn main() {
         .route("/post/:id", get(post))
         .route("/feed", get(feed))
         .nest_service("/static", static_files)
+        .nest_service("/.well-known", well_known)
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(format!(
