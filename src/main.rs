@@ -8,12 +8,17 @@ use axum::{
     routing::get,
     Router,
 };
+use rust_embed::RustEmbed;
 use sqlx::{sqlite::SqlitePool, Pool, Sqlite};
 
 #[derive(Debug, Clone)]
 struct AppState {
     pool: Pool<Sqlite>,
 }
+
+#[derive(RustEmbed, Clone)]
+#[folder = "static/"]
+struct Static;
 
 #[tokio::main]
 async fn main() {
@@ -23,11 +28,18 @@ async fn main() {
         .expect("Couldn't connect to database");
     let state = AppState { pool };
 
+    let static_files = axum_embed::ServeEmbed::<Static>::with_parameters(
+        Some("404.html".to_owned()),
+        axum_embed::FallbackBehavior::NotFound,
+        None,
+    );
+
     let app = Router::new()
         .route("/", get(main_page))
         .route("/about", get(about))
         .route("/contact", get(contact))
         .route("/post/:id", get(post))
+        .nest_service("/static", static_files)
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(format!(
