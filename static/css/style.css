@@ -83,7 +83,8 @@ blockquote {
 
 footer {
     text-align: center;
-    padding: 15px;
+    padding-top: 15px;
+    padding-bottom: 15px;
     background: #2a2a2a; /* Dark footer */
     color: white;
     position: relative; /* Allows footer to sit properly */
