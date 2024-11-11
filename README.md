@@ -1,5 +1,7 @@
 # jonathansm.com
 
-This is where I'm writing my little personal public website. For now I use it
-for Nostr verification and a little about page, a showcase of some of my
-projects, a list of ways to contact me, and maybe some blog posts
+This is the code for my website currently hosted at
+[jonathansm.com](https://jonathansm.com). The whole site is built into two
+files: a binary with the compiled Rust code with some embedded files and
+templates, and a read-only SQLite file with the site content that's made in
+another repo.
