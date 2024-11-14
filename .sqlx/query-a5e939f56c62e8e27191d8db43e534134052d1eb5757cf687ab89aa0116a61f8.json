@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT id, title, date, updated, content\n        FROM special\n        WHERE id = ?\n        ",
+  "query": "\n        SELECT id, title, date, content, commits\n        FROM posts\n        WHERE id = ?\n        ",
   "describe": {
     "columns": [
       {
@@ -19,12 +19,12 @@
         "type_info": "Text"
       },
       {
-        "name": "updated",
+        "name": "content",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "content",
+        "name": "commits",
         "ordinal": 4,
         "type_info": "Text"
       }
@@ -36,9 +36,9 @@
       false,
       false,
       false,
-      true,
-      false
+      false,
+      true
     ]
   },
-  "hash": "9332c6db52828c701c28517059715838a2d556a487837da42131efa9abcbb42b"
+  "hash": "a5e939f56c62e8e27191d8db43e534134052d1eb5757cf687ab89aa0116a61f8"
 }

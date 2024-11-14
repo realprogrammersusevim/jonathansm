@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT id, title, date, content, updated\n        FROM posts\n        ORDER BY date DESC\n        LIMIT 5\n        ",
+  "query": "\n                    SELECT id, date, subject, body\n                    FROM commits\n                    WHERE id = ?\n                    ",
   "describe": {
     "columns": [
       {
@@ -9,36 +9,30 @@
         "type_info": "Text"
       },
       {
-        "name": "title",
+        "name": "date",
         "ordinal": 1,
         "type_info": "Text"
       },
       {
-        "name": "date",
+        "name": "subject",
         "ordinal": 2,
         "type_info": "Text"
       },
       {
-        "name": "content",
+        "name": "body",
         "ordinal": 3,
-        "type_info": "Text"
-      },
-      {
-        "name": "updated",
-        "ordinal": 4,
         "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
-      false,
       false,
       false,
       false,
       true
     ]
   },
-  "hash": "7455bbc276d11ebf7eb97e66ef0c5025beab47a47d52eaa069df7fb57eefc258"
+  "hash": "7018d5bda05a023eaa82e2e272f5b71d51f3f11c49dc1d014f6c24fc8fcf3e3c"
 }
