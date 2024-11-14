@@ -7,10 +7,24 @@
   <article>
     <h1>{{ title }}</h1>
     <p><small>Published on {{ date }}</small></p>
-    {% if let Some(updated) = updated %}
-    <p><small>Last updated on {{ updated }}</small></p>
-    {% endif %}
     <div>{{ content|safe }}</div>
   </article>
+  {% if let Some(commits) = commits %}
+  <details>
+    <summary>Changes</summary>
+    <ul>
+      {% for commit in commits %}
+      <li>
+        <p><b>{{ commit.subject }}</b></p>
+        <p><small>{{ commit.id }} {{ commit.date }}</small></p>
+        {# access the body: Option<String>, #}
+        {% if let Some(body) = commit.body %}
+        <p>{{ body }}</p>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </details>
 </main>
+  {% endif %}
 {% endblock %}

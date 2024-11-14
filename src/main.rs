@@ -1,28 +1,22 @@
+mod routes;
+use routes::{about, contact, main_page, post, Static, WellKnown};
+
 use std::env;
 
 use askama::Template;
 use axum::{
-    extract::{Path, State},
+    extract::State,
     http::{header, StatusCode},
     response::{Html, IntoResponse, Response},
     routing::get,
     Router,
 };
-use rust_embed::RustEmbed;
 use sqlx::{sqlite::SqlitePool, Pool, Sqlite};
 
 #[derive(Debug, Clone)]
-struct AppState {
-    pool: Pool<Sqlite>,
+pub struct AppState {
+    pub pool: Pool<Sqlite>,
 }
-
-#[derive(RustEmbed, Clone)]
-#[folder = "static/"]
-struct Static;
-
-#[derive(RustEmbed, Clone)]
-#[folder = ".well-known/"]
-struct WellKnown;
 
 #[tokio::main]
 async fn main() {
@@ -63,21 +57,134 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
+#[derive(Debug, Clone)]
+pub struct Commit {
+    pub id: String,
+    pub date: String,
+    pub subject: String,
+    pub body: Option<String>,
+}
+
 #[derive(Debug, Clone, Template)]
 #[template(path = "post.html")]
+pub struct FinalPost {
+    pub id: String,
+    pub title: String,
+    pub date: String,
+    pub content: String,
+    pub commits: Option<Vec<Commit>>,
+}
+
+async fn fetch_post(id: &str, app: State<AppState>) -> Result<Post, sqlx::Error> {
+    sqlx::query_as!(
+        Post,
+        r#"
+        SELECT id, title, date, content, commits
+        FROM posts
+        WHERE id = ?
+        "#,
+        id
+    )
+    .fetch_one(&app.pool)
+    .await
+}
+
+async fn fetch_special(id: &str, app: State<AppState>) -> Result<Post, sqlx::Error> {
+    sqlx::query_as!(
+        Post,
+        r#"
+        SELECT id, title, date, content, commits
+        FROM special
+        WHERE id = ?
+        "#,
+        id
+    )
+    .fetch_one(&app.pool)
+    .await
+}
+
+pub enum Table {
+    Posts,
+    Special,
+}
+
+pub async fn get_final_post(
+    id: &str,
+    table: Table,
+    app: State<AppState>,
+) -> Result<FinalPost, sqlx::Error> {
+    let post = match table {
+        Table::Posts => fetch_post(id, app.clone())
+            .await
+            .expect("Failed to fetch post"),
+        Table::Special => fetch_special(id, app.clone())
+            .await
+            .expect("Failed to fetch special post"),
+    };
+
+    let final_post = match Some(post.commits) {
+        Some(commits) => {
+            // The commit ids for the post are stored as a whitespace-separated string
+            let commits_clone = commits.clone().unwrap();
+            let commit_ids: Vec<&str> = commits_clone.split_whitespace().collect();
+            let mut commits = Vec::new();
+            for commit_id in commit_ids {
+                let commit = sqlx::query_as!(
+                    Commit,
+                    r#"
+                    SELECT id, date, subject, body
+                    FROM commits
+                    WHERE id = ?
+                    "#,
+                    commit_id
+                )
+                .fetch_one(&app.pool)
+                .await
+                .unwrap();
+
+                commits.push(commit);
+            }
+
+            FinalPost {
+                id: post.id,
+                title: post.title,
+                date: post.date,
+                content: post.content,
+                commits: Some(commits),
+            }
+        }
+        None => FinalPost {
+            id: post.id,
+            title: post.title,
+            date: post.date,
+            content: post.content,
+            commits: None,
+        },
+    };
+
+    Ok(final_post)
+}
+
 struct Post {
     id: String,
     title: String,
     date: String,
-    updated: Option<String>,
     content: String,
+    commits: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct PostSummary {
+    id: String,
+    title: String,
+    date: String,
 }
 
 #[derive(Debug, Clone, Template)]
 #[template(path = "index.html")]
 struct MainPage {
     title: String,
-    posts: Vec<Post>,
+    posts: Vec<PostSummary>,
 }
 
 /// A wrapper type that we'll use to encapsulate HTML parsed by askama into valid HTML for axum to serve.
@@ -100,84 +207,6 @@ where
             )
                 .into_response(),
         }
-    }
-}
-
-async fn main_page(app: State<AppState>) -> impl IntoResponse {
-    let posts = sqlx::query_as!(
-        Post,
-        r#"
-        SELECT id, title, date, content, updated
-        FROM posts
-        ORDER BY date DESC
-        LIMIT 5
-        "#,
-    )
-    .fetch_all(&app.pool)
-    .await
-    .unwrap();
-
-    let template = MainPage {
-        title: "Jonathan's Blog".to_string(),
-        posts,
-    };
-    HtmlTemplate(template)
-}
-
-async fn get_special(id: &str, app: State<AppState>) -> Result<Post, sqlx::Error> {
-    sqlx::query_as!(
-        Post,
-        r#"
-        SELECT id, title, date, updated, content
-        FROM special
-        WHERE id = ?
-        "#,
-        id
-    )
-    .fetch_one(&app.pool)
-    .await
-}
-
-async fn about(app: State<AppState>) -> impl IntoResponse {
-    match get_special("about", app).await {
-        Ok(about) => HtmlTemplate(about).into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to fetch about page",
-        )
-            .into_response(),
-    }
-}
-
-async fn contact(app: State<AppState>) -> impl IntoResponse {
-    match get_special("contact", app).await {
-        Ok(contact) => HtmlTemplate(contact).into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to fetch contact page",
-        )
-            .into_response(),
-    }
-}
-
-async fn post(Path(id): Path<String>, app: State<AppState>) -> impl IntoResponse {
-    let post = sqlx::query_as!(
-        Post,
-        r#"
-        SELECT id, title, date, updated, content
-        FROM posts
-        WHERE id = ?
-        "#,
-        id
-    )
-    .fetch_one(&app.pool)
-    .await;
-
-    // If the post is found, render the post template
-    // If the post is not found, return a 404
-    match post {
-        Ok(post) => HtmlTemplate(post).into_response(),
-        Err(_) => (StatusCode::NOT_FOUND, "Post not found").into_response(),
     }
 }
 
@@ -228,7 +257,7 @@ async fn feed(app: State<AppState>) -> impl IntoResponse {
     let rss_items: String = sqlx::query_as!(
         Post,
         r#"
-        SELECT id, title, date, content, updated
+        SELECT id, title, date, content, commits
         FROM posts
         ORDER BY date DESC
         LIMIT 20
