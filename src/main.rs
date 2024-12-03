@@ -122,7 +122,7 @@ pub async fn get_final_post(
             .expect("Failed to fetch special post"),
     };
 
-    let final_post = match post.commits {
+    let commits = match post.commits {
         Some(commits) => {
             // The commit ids for the post are stored as a whitespace-separated string
             let commits_clone = commits.clone();
@@ -145,21 +145,17 @@ pub async fn get_final_post(
                 commits.push(commit);
             }
 
-            FinalPost {
-                id: post.id,
-                title: post.title,
-                date: post.date,
-                content: post.content,
-                commits: Some(commits),
-            }
+            Some(commits)
         }
-        None => FinalPost {
-            id: post.id,
-            title: post.title,
-            date: post.date,
-            content: post.content,
-            commits: None,
-        },
+        None => None,
+    };
+
+    let final_post = FinalPost {
+        id: post.id,
+        title: post.title,
+        date: post.date,
+        content: post.content,
+        commits,
     };
 
     Ok(final_post)
