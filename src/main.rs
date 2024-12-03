@@ -122,10 +122,10 @@ pub async fn get_final_post(
             .expect("Failed to fetch special post"),
     };
 
-    let final_post = match Some(post.commits) {
+    let final_post = match post.commits {
         Some(commits) => {
             // The commit ids for the post are stored as a whitespace-separated string
-            let commits_clone = commits.clone().unwrap();
+            let commits_clone = commits.clone();
             let commit_ids: Vec<&str> = commits_clone.split_whitespace().collect();
             let mut commits = Vec::new();
             for commit_id in commit_ids {
