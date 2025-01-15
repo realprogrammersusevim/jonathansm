@@ -7,11 +7,15 @@ use askama::Template;
 use axum::{
     extract::State,
     http::{header, StatusCode},
+    extract::{MatchedPath, Request},
     response::{Html, IntoResponse, Response},
     routing::get,
     Router,
 };
 use sqlx::{sqlite::SqlitePool, Pool, Sqlite};
+use tower_http::{classify::ServerErrorsFailureClass, trace::TraceLayer};
+use tracing::{info_span, Span};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Clone)]
 pub struct AppState {
@@ -38,6 +42,19 @@ async fn main() {
         None,
     );
 
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                format!(
+                    "{}=debug,tower_http=debug,axum::rejection=trace",
+                    env!("CARGO_PKG_NAME")
+                )
+                .into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     let app = Router::new()
         .route("/", get(main_page))
         .route("/about", get(about))
@@ -46,6 +63,15 @@ async fn main() {
         .route("/feed", get(feed))
         .nest_service("/static", static_files)
         .nest_service("/.well-known", well_known)
+        .layer(
+            TraceLayer::new_for_http().make_span_with(|request: &Request<_>| {
+                let matched_path = request
+                    .extensions()
+                    .get::<MatchedPath>()
+                    .map(MatchedPath::as_str);
+                info_span!("http_request", method = ?request.method(), matched_path)
+            }),
+        )
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(format!(
