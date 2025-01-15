@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}{{ title }}{% endblock %}
 {% block content %}
-
 <main>
   <article>
-    <h1>{{ title }}</h1>
+    {% if let Some(title) = title %}
+      <h1>{{ title }}</h1>
+    {% endif %}
     <p><small>Published on {{ date }}</small></p>
     <div>{{ content|safe }}</div>
   </article>
-  {% if let Some(commits) = commits %}
+  {% if let Some(commits) = real_commits %}
   <details>
     <summary>Changes</summary>
     <ul>
@@ -17,14 +17,13 @@
       <li>
         <p><b>{{ commit.subject }}</b></p>
         <p><small>{{ commit.id }} {{ commit.date }}</small></p>
-        {# access the body: Option<String>, #}
         {% if let Some(body) = commit.body %}
-        <p>{{ body }}</p>
+          <p>{{ body }}</p>
         {% endif %}
       </li>
       {% endfor %}
     </ul>
   </details>
-</main>
   {% endif %}
+</main>
 {% endblock %}

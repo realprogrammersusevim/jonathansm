@@ -1,16 +1,18 @@
 {% extends "base.html" %}
 
-  {% block title %} {{ title }} {% endblock %}
-
 {% block content %}
 <main>
   <h2>Recent Posts</h2>
   <ul>
     {% for post in posts %}
     <li>
+      {% if let Some(title) = post.title %}
       <h3>
-        <a href="/post/{{ post.id }}">{{ post.title }}</a>
+        <a href="/post/{{ post.id }}">{{ title }}</a>
       </h3>
+      {% else if let Some(link) = post.link %}
+        <a href="{{ link }}">{{ link }}</a>
+      {% endif %}
       <p><small>Published on {{ post.date }}</small></p>
     </li>
     {% endfor %}

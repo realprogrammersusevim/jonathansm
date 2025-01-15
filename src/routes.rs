@@ -1,4 +1,4 @@
-use crate::{get_final_post, AppState, HtmlTemplate, IntoResponse, MainPage, PostSummary, Table};
+use crate::{post::QueryPost, AppState, HtmlTemplate, IntoResponse, MainPage, Post};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -6,10 +6,10 @@ use axum::{
 use rust_embed::RustEmbed;
 
 pub async fn main_page(app: State<AppState>) -> impl IntoResponse {
-    let posts = sqlx::query_as!(
-        PostSummary,
+    let queried = sqlx::query_as!(
+        QueryPost,
         r#"
-        SELECT id, title, date
+        SELECT id, title, date, content, via, link, commits
         FROM posts
         ORDER BY date DESC
         LIMIT 5
@@ -19,6 +19,11 @@ pub async fn main_page(app: State<AppState>) -> impl IntoResponse {
     .await
     .unwrap();
 
+    let mut posts: Vec<Post> = Vec::new();
+    for post in queried.iter() {
+        posts.push(post.clone().into_post(app.clone()).await);
+    }
+
     let template = MainPage {
         title: "Jonathan's Blog".to_string(),
         posts,
@@ -27,34 +32,23 @@ pub async fn main_page(app: State<AppState>) -> impl IntoResponse {
 }
 
 pub async fn about(app: State<AppState>) -> impl IntoResponse {
-    match get_final_post("about", Table::Special, app).await {
-        Ok(about) => HtmlTemplate(about).into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to fetch about page",
-        )
-            .into_response(),
-    }
+    let query = QueryPost::fetch_special("about", app.clone())
+        .await
+        .unwrap(); // If this crashes we've got major problems
+    HtmlTemplate(query.into_post(app).await).into_response()
 }
 
 pub async fn contact(app: State<AppState>) -> impl IntoResponse {
-    match get_final_post("contact", Table::Special, app).await {
-        Ok(contact) => HtmlTemplate(contact).into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to fetch contact page",
-        )
-            .into_response(),
-    }
+    let query = QueryPost::fetch_special("contact", app.clone())
+        .await
+        .unwrap();
+    HtmlTemplate(query.into_post(app).await).into_response()
 }
 
 pub async fn post(Path(id): Path<String>, app: State<AppState>) -> impl IntoResponse {
-    let post = get_final_post(&id, Table::Posts, app).await;
-
-    // If the post is found, render the post template
-    // If the post is not found, return a 404
-    match post {
-        Ok(post) => HtmlTemplate(post).into_response(),
+    let query = QueryPost::fetch(&id, app.clone()).await;
+    match query {
+        Ok(post) => HtmlTemplate(post.into_post(app.clone()).await).into_response(),
         Err(_) => (StatusCode::NOT_FOUND, "Post not found").into_response(),
     }
 }
