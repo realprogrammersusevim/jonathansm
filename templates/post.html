@@ -1,29 +1,3 @@
-{% extends "base.html" %}
-
-{% block content %}
-<main>
-  <article>
-    {% if let Some(title) = title %}
-      <h1>{{ title }}</h1>
-    {% endif %}
-    <p><small>Published on {{ date }}</small></p>
-    <div>{{ content|safe }}</div>
-  </article>
-  {% if let Some(commits) = real_commits %}
-  <details>
-    <summary>Changes</summary>
-    <ul>
-      {% for commit in commits %}
-      <li>
-        <p><b>{{ commit.subject }}</b></p>
-        <p><small>{{ commit.id }} {{ commit.date }}</small></p>
-        {% if let Some(body) = commit.body %}
-          <p>{{ body }}</p>
-        {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
-  </details>
-  {% endif %}
-</main>
-{% endblock %}
+{% extends "base.html" %} {% block content %}
+<main>{% include "partial/post.html" %}</main>
+{% include "partial/commits.html" %} {% endblock %}

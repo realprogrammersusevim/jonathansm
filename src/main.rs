@@ -8,17 +8,17 @@ use rss::feed;
 
 use std::env;
 
-use askama::Template;
 use axum::{
     extract::{MatchedPath, Request},
-    http::StatusCode,
     response::{Html, IntoResponse, Response},
     routing::get,
     Router,
 };
+use lazy_static::lazy_static;
 use sqlx::{sqlite::SqlitePool, Pool, Sqlite};
-use tower_http::{classify::ServerErrorsFailureClass, trace::TraceLayer};
-use tracing::{info_span, Span};
+use tera::{Context, Tera};
+use tower_http::trace::TraceLayer;
+use tracing::info_span;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Clone)]
@@ -87,32 +87,28 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-#[derive(Debug, Clone, Template)]
-#[template(path = "index.html")]
+#[derive(Debug, Clone)]
 struct MainPage {
     title: String,
     posts: Vec<Post>,
 }
 
-/// A wrapper type that we'll use to encapsulate HTML parsed by askama into valid HTML for axum to serve.
-struct HtmlTemplate<T>(T);
-
-/// Allows us to convert Askama HTML templates into valid HTML for axum to serve in the response.
-impl<T> IntoResponse for HtmlTemplate<T>
-where
-    T: Template,
-{
+impl IntoResponse for MainPage {
     fn into_response(self) -> Response {
-        // Attempt to render the template with askama
-        match self.0.render() {
-            // If we're able to successfully parse and aggregate the template, serve it
-            Ok(html) => Html(html).into_response(),
-            // If we're not, return an error or some bit of fallback HTML
-            Err(err) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to render template. Error: {}", err),
-            )
-                .into_response(),
-        }
+        let mut context = Context::new();
+        context.insert("title", &self.title);
+        context.insert("posts", &self.posts);
+        let rendered = TEMPLATES
+            .render("index.html", &context)
+            .expect("Failed to render template");
+        Html(rendered).into_response()
     }
+}
+
+lazy_static! {
+    pub static ref TEMPLATES: Tera = {
+        let tera = Tera::new("templates/**/*").unwrap();
+
+        return tera;
+    };
 }

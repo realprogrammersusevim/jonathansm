@@ -1,19 +1,16 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <main>
   <h2>Recent Posts</h2>
   <ul>
     {% for post in posts %}
     <li>
-      {% if let Some(title) = post.title %}
-      <h3>
-        <a href="/post/{{ post.id }}">{{ title }}</a>
-      </h3>
-      {% else if let Some(link) = post.link %}
-        <a href="{{ link }}">{{ link }}</a>
+      {% if post.content_type == "Post" %}
+      {% include "partial/post.html" %}
+      {% elif post.content_type == "Link" %}
+      {% include "partial/link.html" %}
+      {% elif post.content_type == "Quote" %}
+      {% include "partial/quote.html" %}
       {% endif %}
-      <p><small>Published on {{ post.date }}</small></p>
     </li>
     {% endfor %}
   </ul>

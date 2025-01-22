@@ -1,27 +1,31 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Jonathan's Blog{% endblock %}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="icon" href="/static/imgs/favicon.ico">
-    <link rel="alternate" type="application/atom+xml" title="Atom" href="/feed">
-</head>
-<body>
-<header>
-  <h1>Jonathan's Blog</h1>
-  <nav>
-    <a href="/">Home</a>
-    <a href="/about">About</a>
-    <a href="/contact">Contact</a>
-  </nav>
-</header>
-    {% block content %}
-    {% endblock %}
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="icon" href="/static/imgs/favicon.ico" />
+    <link
+      rel="alternate"
+      type="application/atom+xml"
+      title="Atom"
+      href="/feed"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>Jonathan's Blog</h1>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+      </nav>
+    </header>
+    {% block content %} {% endblock %}
 
     <footer>
       <p>&copy; 2024</p>
     </footer>
-</body>
+  </body>
 </html>

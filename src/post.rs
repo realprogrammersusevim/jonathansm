@@ -1,9 +1,13 @@
-use crate::AppState;
+use crate::{AppState, TEMPLATES};
 
-use askama::Template;
-use axum::extract::State;
+use axum::{
+    extract::State,
+    response::{Html, IntoResponse, Response},
+};
+use serde::Serialize;
+use tera::Context;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Commit {
     pub id: String,
     pub date: String,
@@ -11,12 +15,33 @@ pub struct Commit {
     pub body: Option<String>,
 }
 
+#[derive(Debug, Clone, Copy, sqlx::Type, Serialize)]
+#[sqlx(type_name = "TEXT")]
+pub enum ContentType {
+    Post,
+    Link,
+    Quote,
+}
+
+impl From<String> for ContentType {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "post" => ContentType::Post,
+            "link" => ContentType::Link,
+            "quote" => ContentType::Quote,
+            _ => ContentType::Post,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct QueryPost {
     pub id: String,
+    pub content_type: ContentType,
     pub title: Option<String>,
     pub link: Option<String>,
     pub via: Option<String>,
+    pub quote_author: Option<String>,
     pub date: String,
     pub content: String,
     pub commits: Option<String>,
@@ -27,9 +52,9 @@ impl QueryPost {
         sqlx::query_as!(
             QueryPost,
             r#"
-        SELECT id, title, link, via, date, content, commits
+        SELECT *
         FROM posts
-        WHERE id = ?
+        WHERE id = ? AND content_type != 'special'
         "#,
             id,
         )
@@ -41,9 +66,9 @@ impl QueryPost {
         sqlx::query_as!(
             QueryPost,
             r#"
-        SELECT id, title, link, via, date, content, commits
-        FROM special
-        WHERE id = ?
+        SELECT *
+        FROM posts
+        WHERE id = ? AND content_type = 'special'
         "#,
             id
         )
@@ -83,8 +108,10 @@ impl QueryPost {
         Post {
             id: self.id,
             title: self.title,
+            content_type: self.content_type,
             link: self.link,
             via: self.via,
+            quote_author: self.quote_author,
             date: self.date,
             content: self.content,
             real_commits: commits,
@@ -92,16 +119,26 @@ impl QueryPost {
     }
 }
 
-#[derive(Debug, Clone, Template)]
-#[template(path = "post.html")]
+#[derive(Debug, Clone, Serialize)]
 pub struct Post {
     pub id: String,
+    pub content_type: ContentType,
     pub title: Option<String>,
     pub link: Option<String>,
     pub via: Option<String>,
+    pub quote_author: Option<String>,
     pub date: String,
     pub content: String,
     pub real_commits: Option<Vec<Commit>>,
 }
 
-impl Post {}
+impl IntoResponse for Post {
+    fn into_response(self) -> Response {
+        let mut context = Context::new();
+        context.insert("post", &self);
+        let rendered = TEMPLATES
+            .render("post.html", &context)
+            .expect("Failed to render template");
+        Html(rendered).into_response()
+    }
+}

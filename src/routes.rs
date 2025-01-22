@@ -1,7 +1,8 @@
-use crate::{post::QueryPost, AppState, HtmlTemplate, IntoResponse, MainPage, Post};
+use crate::{post::QueryPost, AppState, MainPage, Post};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
+    response::IntoResponse,
 };
 use rust_embed::RustEmbed;
 
@@ -9,7 +10,7 @@ pub async fn main_page(app: State<AppState>) -> impl IntoResponse {
     let queried = sqlx::query_as!(
         QueryPost,
         r#"
-        SELECT id, title, date, content, via, link, commits
+        SELECT *
         FROM posts
         ORDER BY date DESC
         LIMIT 5
@@ -24,31 +25,30 @@ pub async fn main_page(app: State<AppState>) -> impl IntoResponse {
         posts.push(post.clone().into_post(app.clone()).await);
     }
 
-    let template = MainPage {
+    MainPage {
         title: "Jonathan's Blog".to_string(),
         posts,
-    };
-    HtmlTemplate(template)
+    }
 }
 
 pub async fn about(app: State<AppState>) -> impl IntoResponse {
     let query = QueryPost::fetch_special("about", app.clone())
         .await
         .unwrap(); // If this crashes we've got major problems
-    HtmlTemplate(query.into_post(app).await).into_response()
+    query.into_post(app).await
 }
 
 pub async fn contact(app: State<AppState>) -> impl IntoResponse {
     let query = QueryPost::fetch_special("contact", app.clone())
         .await
         .unwrap();
-    HtmlTemplate(query.into_post(app).await).into_response()
+    query.into_post(app).await
 }
 
 pub async fn post(Path(id): Path<String>, app: State<AppState>) -> impl IntoResponse {
     let query = QueryPost::fetch(&id, app.clone()).await;
     match query {
-        Ok(post) => HtmlTemplate(post.into_post(app.clone()).await).into_response(),
+        Ok(post) => post.into_post(app.clone()).await.into_response(),
         Err(_) => (StatusCode::NOT_FOUND, "Post not found").into_response(),
     }
 }

@@ -51,7 +51,7 @@ pub async fn feed(app: State<AppState>) -> impl IntoResponse {
     let rss_items: String = sqlx::query_as!(
         QueryPost,
         r#"
-        SELECT id, title, link, via, date, content, commits
+        SELECT *
         FROM posts
         ORDER BY date DESC
         LIMIT 20
