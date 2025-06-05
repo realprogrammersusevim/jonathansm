@@ -1,5 +1,9 @@
 <article>
+  {% if is_index %}
+  <h1><a href="/post/{{ post.id }}">{{ post.title }}</a></h1>
+  {% else %}
   <h1>{{ post.title }}</h1>
+  {% endif %}
   <p><small>Published on {{ post.date }}</small></p>
   <div>{{ post.content|safe }}</div>
 </article>

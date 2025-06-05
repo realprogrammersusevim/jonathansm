@@ -1,3 +1,11 @@
 {% extends "base.html" %} {% block content %}
-<main>{% include "partial/post.html" %}</main>
+<main>
+  {% if post.content_type == "Post" %}
+    {% include "partial/post.html" %}
+  {% elif post.content_type == "Link" %}
+    {% include "partial/link.html" %}
+  {% elif post.content_type == "Quote" %}
+    {% include "partial/quote.html" %}
+  {% endif %}
+</main>
 {% include "partial/commits.html" %} {% endblock %}

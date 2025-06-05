@@ -4,12 +4,15 @@
   <ul>
     {% for post in posts %}
     <li>
-      {% if post.content_type == "Post" %}
-      {% include "partial/post.html" %}
-      {% elif post.content_type == "Link" %}
-      {% include "partial/link.html" %}
+      {% if post.content_type == "Link" %}
+        {% include "partial/link.html" %}
+        <p><a href="/post/{{ post.id }}">Permalink</a></p>
+      {% elif post.content_type == "Post" %}
+        {% set is_index = true %}
+        {% include "partial/post.html" %}
       {% elif post.content_type == "Quote" %}
-      {% include "partial/quote.html" %}
+        {% include "partial/quote.html" %}
+        <p><a href="/post/{{ post.id }}">Permalink</a></p>
       {% endif %}
     </li>
     {% endfor %}
