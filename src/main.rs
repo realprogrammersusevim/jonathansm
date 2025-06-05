@@ -15,6 +15,7 @@ use axum::{
     Router,
 };
 use lazy_static::lazy_static;
+use rust_embed::RustEmbed;
 use sqlx::{sqlite::SqlitePool, Pool, Sqlite};
 use tera::{Context, Tera};
 use tower_http::trace::TraceLayer;
@@ -105,9 +106,22 @@ impl IntoResponse for MainPage {
     }
 }
 
+#[derive(RustEmbed)]
+#[folder = "templates/"]
+struct Templates;
+
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
-        let tera = Tera::new("templates/**/*").unwrap();
+        let mut tera = Tera::default();
+
+        let templates_to_add = Templates::iter().map(|path| {
+            let contents = Templates::get(path.as_ref()).unwrap().data;
+            let content_string = String::from_utf8(contents.into_owned()).unwrap();
+            (path, content_string)
+        });
+
+        tera.add_raw_templates(templates_to_add)
+            .expect("Failed to add raw templates");
 
         return tera;
     };
