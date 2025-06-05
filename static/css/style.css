@@ -1,66 +1,123 @@
   /* General Styles */
 body {
-    font-family: 'Courier New', Courier, monospace; /* Programmer vibe */
+    font-family: 'Lora', serif; /* Classic serif font for readability */
+    line-height: 1.7;
     margin: 0;
     padding: 0;
-    background-color: #f7f9fc; /* Light background for contrast */
-    color: #333; /* Darker text for better readability */
+    background-color: #f0f0f0; /* Light gray background */
+    color: #333; /* Dark gray for text */
     display: flex;
     flex-direction: column;
     min-height: 100vh; /* Full height for footer positioning */
 }
 
 header {
-    background: #2a2a2a; /* Dark header */
-    color: #ffffff;
+    background: #fff; /* White header */
+    color: #333;
     padding: 15px 20px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    border-bottom: 1px solid #ddd;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Use a clean sans-serif for headings */
+h1, h2, h3 {
+    font-family: 'Lato', sans-serif;
+}
+
+h1 a, h2 a, h3 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+h1 a:hover, h2 a:hover, h3 a:hover {
+    color: #0056b3; /* Change color on hover to indicate link */
+    text-decoration: none;
+}
+
+code {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #eee;
+    padding: 2px 4px;
+    border-radius: 4px;
 }
 
 header h1 {
     margin: 0;
     font-size: 24px; /* Larger title */
+    text-align: center;
+}
+
+header h1 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+header h1 a:hover {
+    color: inherit;
+}
+
+nav {
+    text-align: center;
+    margin-top: 10px;
 }
 
 nav a {
-    color: #ffffff;
+    color: #333; /* Match header text color */
     margin: 0 15px;
     text-decoration: none;
-    font-weight: bold; /* Bold navigation links */
+    font-weight: normal; /* Less bold */
 }
 
-nav a:hover {
+a {
+    color: #0056b3; /* A standard blue for links */
+    text-decoration: none;
+}
+
+a:hover, nav a:hover {
     text-decoration: underline; /* Underline on hover */
 }
 
 main {
     flex: 1; /* Allow main to grow and push footer down */
-    padding: 20px;
-    max-width: 800px; /* Center the content */
-    margin: auto; /* Center the main section */
+    padding: 20px 40px;
+    max-width: 720px; /* Optimal for reading */
+    margin: 20px auto; /* Center the main section with some top/bottom margin */
+    background-color: #fff; /* White "page" for content */
+    border: 1px solid #ddd;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 h2 {
-    border-bottom: 2px solid #007BFF; /* Add a line below the heading */
-    padding-bottom: 5px; /* Space between heading and content */
+    border-bottom: 1px solid #eee; /* Lighter, more minimal border */
+    padding-bottom: 10px; /* Space between heading and content */
+    margin-top: 0;
 }
 
-ul {
+/* Styling for post list on index page */
+main > ul {
     list-style: none; /* Remove default list styles */
     padding: 0;
 }
 
-li {
-    background: #ffffff; /* White background for posts */
-    margin: 15px 0; /* Space between posts */
-    padding: 15px; /* Padding inside post items */
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow */
-    transition: transform 0.2s; /* Smooth hover effect */
+main > ul > li {
+    background: none;
+    margin: 0; /* Space between posts */
+    padding: 25px 0; /* Padding inside post items */
+    border-radius: 0; /* Rounded corners */
+    border: none; /* Subtle border for separation */
+    border-bottom: 1px solid #eee; /* Separator for posts */
+    transition: none;
 }
 
-li:hover {
-    transform: translateY(-2px); /* Lift effect on hover */
+main > ul > li:last-child {
+    border-bottom: none;
+}
+
+main > ul > li:hover {
+    border-color: transparent; /* Darken border on hover */
+    background-color: #fafafa; /* Subtle hover effect */
 }
 
 h3 {
@@ -74,24 +131,37 @@ blockquote {
     margin: 20px 0; /* Space around blockquotes */
     padding-left: 20px; /* Space for the vertical line */
     color: #555; /* Slightly lighter text color */
-    font-style: italic; /* Italic text for emphasis */
-    border-left: 4px solid #007BFF; /* Colored vertical line */
-    background-color: #f0f8ff; /* Light background color for blockquotes */
+    font-style: italic; /* More traditional academic style */
+    border-left: 4px solid #ddd; /* Lighter border */
+    background-color: transparent; /* More minimal blockquote */
     padding: 10px 20px; /* Padding inside blockquotes */
-    border-radius: 5px; /* Rounded corners for blockquote */
+    border-radius: 0; /* Sharp corners */
+}
+
+blockquote footer {
+    font-style: normal;
+    margin-top: 10px;
+    color: #777;
 }
 
 footer {
     text-align: center;
-    padding-top: 15px;
-    padding-bottom: 15px;
-    background: #2a2a2a; /* Dark footer */
-    color: white;
+    padding: 20px;
+    background: #fff; /* Match header */
+    color: #333; /* Match header */
     position: relative; /* Allows footer to sit properly */
     margin-top: auto; /* Pushes footer to the bottom */
     width: 100%; /* Full width */
+    border-top: 1px solid #ddd; /* Subtle border */
+    box-sizing: border-box;
 }
 
 footer p {
     margin: 0; /* Remove margin from footer text */
+}
+
+/* Style for permalinks */
+p > a[href^="/post/"] {
+    font-size: 0.9em;
+    color: #666;
 }
