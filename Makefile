@@ -3,7 +3,7 @@ ifneq (,$(wildcard ./.env))
   export
 endif
 
-BUILD_DIR="target/aarch64-unknown-linux-musl/release"
+BUILD_DIR="target/x86_64-unknown-linux-gnu/release"
 BIN_NAME="jonathansm"
 
 .PHONY: all pi mac test clean deploy
@@ -11,7 +11,7 @@ BIN_NAME="jonathansm"
 all: pi mac
 
 pi:
-	cargo build --release --target=aarch64-unknown-linux-musl
+	cargo build --release --target=x86_64-unknown-linux-gnu
 
 mac:
 	cargo build --release
