@@ -1,4 +1,4 @@
-use crate::{AppState, IntoResponse, QueryPost};
+use crate::{post::ContentType, AppState, IntoResponse, QueryPost};
 use axum::{
     extract::State,
     http::{header, StatusCode},
@@ -9,18 +9,44 @@ struct RssEntry {
     link: String,
     content: String,
     pub_date: String,
-    author: String,
     guid: String,
 }
 
 impl From<QueryPost> for RssEntry {
     fn from(post: QueryPost) -> Self {
         let full_url = format!("https://jonathansm.com/post/{}", post.id);
+
+        let (title, content) = match post.content_type {
+            ContentType::Post => (
+                post.title.unwrap_or_else(|| "Untitled".to_string()),
+                post.content,
+            ),
+            ContentType::Link => {
+                let link_title = post.title.as_deref().unwrap_or("this link");
+                let title = format!("Link: {}", link_title);
+                let link_html = post.link.map_or_else(String::new, |link| {
+                    format!(r#"<p>Link: <a href="{}">{}</a></p>"#, link, link_title)
+                });
+                (title, format!("{}{}", link_html, post.content))
+            }
+            ContentType::Quote => {
+                let author = post.quote_author.as_deref().unwrap_or("an unknown source");
+                let title = post
+                    .title
+                    .clone()
+                    .unwrap_or_else(|| format!("Quote from {}", author));
+                let attribution = post.quote_author.map_or_else(String::new, |name| {
+                    format!("<figcaption>— {}</figcaption>", name)
+                });
+                let blockquote = format!("<blockquote>{}</blockquote>{}", post.content, attribution);
+                (title, blockquote)
+            }
+        };
+
         Self {
-            title: post.title.unwrap_or("Untitled".to_string()),
+            title,
             link: full_url.clone(),
-            content: post.content,
-            author: "Jonathan".to_string(),
+            content,
             pub_date: post.date,
             guid: full_url,
         }
@@ -34,13 +60,12 @@ impl RssEntry {
             <item>
                 <title>{}</title>
                 <link>{}</link>
-                <content type="html">{}</content>
-                <pubDate>{}</pubDate>
-                <author>{}</author>
                 <guid isPermalink="true">{}</guid>
+                <pubDate>{}</pubDate>
+                <content:encoded><![CDATA[{}]]></content:encoded>
             </item>
             "#,
-            self.title, self.link, self.content, self.pub_date, self.author, self.guid
+            self.title, self.link, self.guid, self.pub_date, self.content
         )
         .trim()
         .to_string()
@@ -53,6 +78,7 @@ pub async fn feed(app: State<AppState>) -> impl IntoResponse {
         r#"
         SELECT *
         FROM posts
+        WHERE content_type != 'special'
         ORDER BY date DESC
         LIMIT 20
         "#,
@@ -67,7 +93,7 @@ pub async fn feed(app: State<AppState>) -> impl IntoResponse {
     let rss = format!(
         r#"
         <?xml version="1.0" encoding="UTF-8" ?>
-        <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+        <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">
             <channel>
                 <title>Jonathan's Blog</title>
                 <link>https://jonathansm.com</link>
