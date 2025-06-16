@@ -7,7 +7,7 @@
   <ul>
   {% for post in posts %}
   <li>
-    {{ macros::render_post(post=post, is_index=true) }}
+    {{ macros::render_post(post=post, is_index=true, show_permalink=true) }}
   </li>
   {% endfor %}
   </ul>
