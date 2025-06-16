@@ -3,6 +3,6 @@
   <a href="{{ post.link }}">{{ post.title }}</a>
   {% else %}
   <a href="{{ post.link }}">{{ post.link }}</a>
-  {% endif %} {% if post.via %} (<a href="{{ post.via }}">{{ post.via }}</a>) {%
+  {% endif %} {% if post.via %} (<a href="{{ post.via }}">via</a>) {%
   endif %} {{ post.content|safe }}
 </article>
