@@ -11,5 +11,5 @@ another repo.
 - [ ] Tagging
 - [ ] Search
 - [ ] Syntax highlighting
-- [ ] Pagination
+- [x] Pagination
 - [ ] Global changelog
