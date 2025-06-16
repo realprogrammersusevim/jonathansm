@@ -4,5 +4,7 @@
   {% else %}
   <a href="{{ post.link }}">{{ post.link }}</a>
   {% endif %} {% if post.via %} (<a href="{{ post.via }}">via</a>) {%
-  endif %} {{ post.content|safe }}
+  endif %}
+  <p><small>Published on {{ post.date }}</small></p>
+  <div>{{ post.content|safe }}</div>
 </article>
