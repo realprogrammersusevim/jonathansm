@@ -173,3 +173,20 @@ p > a[href^="/post/"] {
     font-size: 0.9em;
     color: #666;
 }
+
+/* Pagination Styles */
+.pagination {
+    text-align: center;
+    padding-top: 20px;
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.pagination a,
+.pagination span {
+    margin: 0 15px;
+}
+
+.pagination span {
+    color: #666;
+}

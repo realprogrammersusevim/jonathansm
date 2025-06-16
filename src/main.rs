@@ -3,7 +3,7 @@ mod routes;
 mod rss;
 
 use post::{Post, QueryPost};
-use routes::{about, contact, main_page, post, Static, WellKnown};
+use routes::{about, contact, main_page, post, posts_index, Static, WellKnown};
 use rss::feed;
 
 use std::env;
@@ -62,6 +62,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(main_page))
+        .route("/posts", get(posts_index))
         .route("/about", get(about))
         .route("/contact", get(contact))
         .route("/post/:id", get(post))
@@ -101,6 +102,28 @@ impl IntoResponse for MainPage {
         context.insert("posts", &self.posts);
         let rendered = TEMPLATES
             .render("index.html", &context)
+            .expect("Failed to render template");
+        Html(rendered).into_response()
+    }
+}
+
+#[derive(Debug, Clone)]
+struct PostsPage {
+    title: String,
+    posts: Vec<Post>,
+    current_page: usize,
+    total_pages: usize,
+}
+
+impl IntoResponse for PostsPage {
+    fn into_response(self) -> Response {
+        let mut context = Context::new();
+        context.insert("title", &self.title);
+        context.insert("posts", &self.posts);
+        context.insert("current_page", &self.current_page);
+        context.insert("total_pages", &self.total_pages);
+        let rendered = TEMPLATES
+            .render("posts.html", &context)
             .expect("Failed to render template");
         Html(rendered).into_response()
     }

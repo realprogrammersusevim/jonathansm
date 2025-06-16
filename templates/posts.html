@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+  <h2>All Posts</h2>
+  <ul>
+  {% for post in posts %}
+  <li>
+    {% if post.content_type == "Post" %}
+      {% include "partial/post.html" %}
+    {% elif post.content_type == "Link" %}
+      {% include "partial/link.html" %}
+    {% elif post.content_type == "Quote" %}
+      {% include "partial/quote.html" %}
+    {% endif %}
+  </li>
+  {% endfor %}
+  </ul>
+
+  {% if total_pages > 0 %}
+  <div class="pagination">
+      {% if current_page > 1 %}
+          <a href="/posts?page={{ current_page - 1 }}">&laquo; Previous</a>
+      {% endif %}
+
+      <span>Page {{ current_page }} of {{ total_pages }}</span>
+
+      {% if current_page < total_pages %}
+          <a href="/posts?page={{ current_page + 1 }}">Next &raquo;</a>
+      {% endif %}
+  </div>
+  {% endif %}
+</main>
+{% endblock content %}
