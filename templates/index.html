@@ -1,19 +1,13 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block content %}
 <main>
   <h2>Recent Posts</h2>
   <ul>
     {% for post in posts %}
     <li>
-      {% if post.content_type == "Link" %}
-        {% include "partial/link.html" %}
-        <p><a href="/post/{{ post.id }}">Permalink</a></p>
-      {% elif post.content_type == "Post" %}
-        {% set is_index = true %}
-        {% include "partial/post.html" %}
-      {% elif post.content_type == "Quote" %}
-        {% include "partial/quote.html" %}
-        <p><a href="/post/{{ post.id }}">Permalink</a></p>
-      {% endif %}
+      {{ macros::render_post(post=post, is_index=true, show_permalink=true) }}
     </li>
     {% endfor %}
   </ul>

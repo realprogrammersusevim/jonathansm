@@ -1,0 +1,69 @@
+{% macro post(post, is_index=false) %}
+<article>
+  {% if is_index %}
+  <h1><a href="/post/{{ post.id }}">{{ post.title }}</a></h1>
+  {% else %}
+  <h1>{{ post.title }}</h1>
+  {% endif %}
+  <p><small>Published on {{ post.date }}</small></p>
+  <div>{{ post.content|safe }}</div>
+</article>
+{% endmacro post %}
+
+{% macro link(post) %}
+<article>
+  {% if post.title %}
+  <a href="{{ post.link }}">{{ post.title }}</a>
+  {% else %}
+  <a href="{{ post.link }}">{{ post.link }}</a>
+  {% endif %} {% if post.via %} (<a href="{{ post.via }}">via</a>) {%
+  endif %}
+  <p><small>Published on {{ post.date }}</small></p>
+  <div>{{ post.content|safe }}</div>
+</article>
+{% endmacro link %}
+
+{% macro quote(post) %}
+<article>
+  <p><small>Published on {{ post.date }}</small></p>
+  <blockquote>
+    {{ post.content }}
+    <footer>{{ post.quote_author|display_some }}</footer>
+  </blockquote>
+</article>
+{% endmacro quote %}
+
+{% macro commits(post) %}
+<details>
+  <summary>Changes</summary>
+  {% if post.real_commits %}
+  <ul>
+    {% for commit in post.real_commits %}
+    <li>
+      <p><b>{{ commit.subject }}</b></p>
+      <p><small>{{ commit.id }} {{ commit.date }}</small></p>
+      {% if commit.body %}
+      <p>{{ commit.body }}</p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
+{% endmacro commits %}
+
+{% macro render_post(post, is_index=false, show_permalink=false, show_commits=false) %}
+  {% if post.content_type == "Post" %}
+    {{ self::post(post=post, is_index=is_index) }}
+  {% elif post.content_type == "Link" %}
+    {{ self::link(post=post) }}
+    {% if show_permalink %}<p><a href="/post/{{ post.id }}">Permalink</a></p>{% endif %}
+  {% elif post.content_type == "Quote" %}
+    {{ self::quote(post=post) }}
+    {% if show_permalink %}<p><a href="/post/{{ post.id }}">Permalink</a></p>{% endif %}
+  {% endif %}
+
+  {% if show_commits %}
+    {{ self::commits(post=post) }}
+  {% endif %}
+{% endmacro render_post %}

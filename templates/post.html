@@ -1,11 +1,8 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block content %}
 <main>
-  {% if post.content_type == "Post" %}
-    {% include "partial/post.html" %}
-  {% elif post.content_type == "Link" %}
-    {% include "partial/link.html" %}
-  {% elif post.content_type == "Quote" %}
-    {% include "partial/quote.html" %}
-  {% endif %}
+  {{ macros::render_post(post=post, show_commits=true) }}
 </main>
-{% include "partial/commits.html" %} {% endblock %}
+{% endblock %}

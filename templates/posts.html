@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 
 {% block content %}
 <main>
@@ -6,13 +7,7 @@
   <ul>
   {% for post in posts %}
   <li>
-    {% if post.content_type == "Post" %}
-      {% include "partial/post.html" %}
-    {% elif post.content_type == "Link" %}
-      {% include "partial/link.html" %}
-    {% elif post.content_type == "Quote" %}
-      {% include "partial/quote.html" %}
-    {% endif %}
+    {{ macros::render_post(post=post, is_index=true) }}
   </li>
   {% endfor %}
   </ul>
