@@ -144,6 +144,14 @@ blockquote footer {
     color: #777;
 }
 
+/* Responsive images */
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
 footer {
     text-align: center;
     padding: 20px;
