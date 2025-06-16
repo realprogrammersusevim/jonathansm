@@ -38,7 +38,8 @@ impl From<QueryPost> for RssEntry {
                 let attribution = post.quote_author.map_or_else(String::new, |name| {
                     format!("<figcaption>— {}</figcaption>", name)
                 });
-                let blockquote = format!("<blockquote>{}</blockquote>{}", post.content, attribution);
+                let blockquote =
+                    format!("<blockquote>{}</blockquote>{}", post.content, attribution);
                 (title, blockquote)
             }
         };
