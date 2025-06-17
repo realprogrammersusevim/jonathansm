@@ -14,7 +14,8 @@ use axum::{
     routing::get,
     Router,
 };
-use sqlx::sqlite::SqlitePool;
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::OpenFlags;
 use tower_http::trace::TraceLayer;
 use tracing::info_span;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -22,9 +23,13 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
-    let pool = SqlitePool::connect(&env::var("DATABASE_URL").expect("No DATABASE_URL set"))
-        .await
-        .expect("Couldn't connect to database");
+    let manager =
+        SqliteConnectionManager::file(env::var("DATABASE_URL").expect("No DATABASE_URL set"))
+            .with_flags(OpenFlags::SQLITE_OPEN_READ_ONLY);
+    let pool = r2d2::Pool::builder()
+        .max_size(15)
+        .build(manager)
+        .expect("Can't build pool");
     let state = AppState::new(pool);
 
     let static_files = axum_embed::ServeEmbed::<Static>::with_parameters(

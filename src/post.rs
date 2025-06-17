@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Commit {
     pub id: String,
     pub date: String,
@@ -8,8 +8,7 @@ pub struct Commit {
     pub body: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, sqlx::Type, Serialize)]
-#[sqlx(type_name = "TEXT")]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub enum ContentType {
     Post,
     Link,

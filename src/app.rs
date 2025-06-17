@@ -1,17 +1,18 @@
 use anyhow::Result;
 use axum::response::{IntoResponse, Response};
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
 use rust_embed::RustEmbed;
-use sqlx::{Pool, Sqlite};
 use tera::{Context, Tera};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct AppState {
     pub post_service: crate::services::post::PostService,
     pub tera: Tera,
 }
 
 impl AppState {
-    pub fn new(pool: Pool<Sqlite>) -> Self {
+    pub fn new(pool: Pool<SqliteConnectionManager>) -> Self {
         let tera = Self::load_templates().unwrap();
         AppState {
             post_service: crate::services::post::PostService::new(pool),
