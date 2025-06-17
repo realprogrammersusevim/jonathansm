@@ -1,4 +1,5 @@
-use crate::{post::ContentType, AppState, IntoResponse, QueryPost};
+use crate::{post::ContentType, post::QueryPost, AppState};
+use axum::response::IntoResponse;
 use axum::{
     extract::State,
     http::{header, StatusCode},
@@ -74,22 +75,12 @@ impl RssEntry {
 }
 
 pub async fn feed(app: State<AppState>) -> impl IntoResponse {
-    let rss_items: String = sqlx::query_as!(
-        QueryPost,
-        r#"
-        SELECT *
-        FROM posts
-        WHERE content_type != 'special'
-        ORDER BY date DESC
-        LIMIT 20
-        "#,
-    )
-    .fetch_all(&app.pool)
-    .await
-    .unwrap()
-    .into_iter()
-    .map(|post| RssEntry::from(post).to_xml())
-    .collect();
+    let entries = app.0.post_service.get_rss_entries().await.unwrap();
+    let rss_items: String = entries
+        .into_iter()
+        .map(RssEntry::from)
+        .map(|entry| entry.to_xml())
+        .collect();
 
     let rss = format!(
         r#"
