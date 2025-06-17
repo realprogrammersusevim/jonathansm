@@ -1,4 +1,4 @@
-use crate::{post::ContentType, post::QueryPost, AppState};
+use crate::{post::ContentType, post::Post, AppState};
 use axum::response::IntoResponse;
 use axum::{
     extract::State,
@@ -13,8 +13,8 @@ struct RssEntry {
     guid: String,
 }
 
-impl From<QueryPost> for RssEntry {
-    fn from(post: QueryPost) -> Self {
+impl From<Post> for RssEntry {
+    fn from(post: Post) -> Self {
         let full_url = format!("https://jonathansm.com/post/{}", post.id);
 
         let (title, content) = match post.content_type {

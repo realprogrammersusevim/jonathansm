@@ -1,4 +1,4 @@
-use crate::post::{Commit, ContentType, Post, QueryPost};
+use crate::post::{Commit, ContentType, Post};
 use anyhow::{Context, Result};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -16,7 +16,7 @@ impl PostService {
         Self { pool }
     }
 
-    fn row_to_query_post(row: &rusqlite::Row) -> rusqlite::Result<QueryPost> {
+    fn row_to_post(row: &rusqlite::Row) -> rusqlite::Result<Post> {
         let id: String = row.get("id")?;
         let content_type_str: String = row.get("content_type")?;
         let content_type = ContentType::from(content_type_str);
@@ -28,7 +28,7 @@ impl PostService {
         let content: String = row.get("content")?;
         let commits: Option<String> = row.get("commits")?;
 
-        Ok(QueryPost {
+        Ok(Post {
             id,
             content_type,
             title,
@@ -38,6 +38,7 @@ impl PostService {
             date,
             content,
             commits,
+            real_commits: None,
         })
     }
 
@@ -48,7 +49,7 @@ impl PostService {
             let mut stmt = conn.prepare(
                 "SELECT * FROM posts WHERE content_type != 'special' ORDER BY date DESC LIMIT 5",
             )?;
-            let iter = stmt.query_map([], Self::row_to_query_post)?;
+            let iter = stmt.query_map([], Self::row_to_post)?;
             let mut result = Vec::new();
             for post in iter {
                 result.push(post?);
@@ -71,7 +72,7 @@ impl PostService {
             let mut stmt = conn.prepare(
                 "SELECT * FROM posts WHERE content_type != 'special' ORDER BY date DESC LIMIT ? OFFSET ?",
             )?;
-            let iter = stmt.query_map(params![POSTS_PER_PAGE, offset], Self::row_to_query_post)?;
+            let iter = stmt.query_map(params![POSTS_PER_PAGE, offset], Self::row_to_post)?;
             let mut result = Vec::new();
             for post in iter {
                 result.push(post?);
@@ -110,7 +111,7 @@ impl PostService {
             let result = conn.query_row(
                 "SELECT * FROM posts WHERE id = ? AND content_type != 'special'",
                 [&id_clone],
-                Self::row_to_query_post,
+                Self::row_to_post,
             )?;
             anyhow::Result::<_>::Ok(result)
         })
@@ -129,7 +130,7 @@ impl PostService {
             let result = conn.query_row(
                 "SELECT * FROM posts WHERE id = ? AND content_type = 'special'",
                 [&id_clone],
-                Self::row_to_query_post,
+                Self::row_to_post,
             )?;
             anyhow::Result::<_>::Ok(result)
         })
@@ -140,14 +141,14 @@ impl PostService {
         self.convert_to_post(query).await
     }
 
-    pub async fn get_rss_entries(&self) -> Result<Vec<QueryPost>> {
+    pub async fn get_rss_entries(&self) -> Result<Vec<Post>> {
         let pool = self.pool.clone();
         task::spawn_blocking(move || {
             let conn = pool.get()?;
             let mut stmt = conn.prepare(
                 "SELECT * FROM posts WHERE content_type != 'special' ORDER BY date DESC LIMIT 20",
             )?;
-            let iter = stmt.query_map([], Self::row_to_query_post)?;
+            let iter = stmt.query_map([], Self::row_to_post)?;
             let mut result = Vec::new();
             for post in iter {
                 result.push(post?);
@@ -159,14 +160,14 @@ impl PostService {
         .context("Failed to fetch RSS entries")
     }
 
-    async fn convert_to_post(&self, query: QueryPost) -> Result<Post> {
-        self.bulk_convert_to_posts(vec![query])
+    async fn convert_to_post(&self, post: Post) -> Result<Post> {
+        self.bulk_convert_to_posts(vec![post])
             .await
             .map(|mut v| v.remove(0))
     }
 
-    async fn bulk_convert_to_posts(&self, query_posts: Vec<QueryPost>) -> Result<Vec<Post>> {
-        let all_commit_ids: Vec<_> = query_posts
+    async fn bulk_convert_to_posts(&self, mut posts: Vec<Post>) -> Result<Vec<Post>> {
+        let all_commit_ids: Vec<_> = posts
             .iter()
             .filter_map(|post| post.commits.as_ref())
             .flat_map(|commits| commits.split_whitespace())
@@ -212,27 +213,16 @@ impl PostService {
             HashMap::new()
         };
 
-        Ok(query_posts
-            .into_iter()
-            .map(|post| {
-                let real_commits = post.commits.as_ref().map(|ids| {
-                    ids.split_whitespace()
-                        .filter_map(|id| commits_map.get(id).cloned())
-                        .collect()
-                });
+        for post in &mut posts {
+            if let Some(ids) = &post.commits {
+                let real_commits: Vec<Commit> = ids
+                    .split_whitespace()
+                    .filter_map(|id| commits_map.get(id).cloned())
+                    .collect();
+                post.real_commits = Some(real_commits);
+            }
+        }
 
-                Post {
-                    id: post.id,
-                    content_type: post.content_type,
-                    title: post.title,
-                    link: post.link,
-                    via: post.via,
-                    quote_author: post.quote_author,
-                    date: post.date,
-                    content: post.content,
-                    real_commits,
-                }
-            })
-            .collect())
+        Ok(posts)
     }
 }

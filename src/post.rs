@@ -26,21 +26,6 @@ impl From<String> for ContentType {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct QueryPost {
-    pub id: String,
-    pub content_type: ContentType,
-    pub title: Option<String>,
-    pub link: Option<String>,
-    pub via: Option<String>,
-    pub quote_author: Option<String>,
-    pub date: String,
-    pub content: String,
-    pub commits: Option<String>,
-}
-
-impl QueryPost {}
-
 #[derive(Debug, Clone, Serialize)]
 pub struct Post {
     pub id: String,
@@ -51,5 +36,7 @@ pub struct Post {
     pub quote_author: Option<String>,
     pub date: String,
     pub content: String,
+    #[serde(skip_serializing)]
+    pub commits: Option<String>,
     pub real_commits: Option<Vec<Commit>>,
 }
