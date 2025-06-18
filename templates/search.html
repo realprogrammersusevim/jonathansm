@@ -3,13 +3,10 @@
 
 {% block content %}
 <main>
-  <h2>Search</h2>
-  <form action="/search" method="GET">
-    <input type="text" name="q" value="{{ query | default(value='') }}" 
-           placeholder="Search posts..." class="search-box">
-    <input type="submit" value="Search" class="search-btn">
+  <form action="/search" method="GET" class="search-form">
+    <input type="text" name="q" value="{{ query | default(value='') }}" placeholder="Search" class="search-box">
   </form>
-
+  
   {% if query %}
     {% if total_results > 0 %}
       <p>{{ total_results }} result{% if total_results != 1 %}s{% endif %} found</p>
