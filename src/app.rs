@@ -51,7 +51,12 @@ impl AppState {
     pub fn render(&self, template: &str, context: &Context) -> Result<Response> {
         let mut context = context.clone();
         context.insert("build_id", &self.build_id);
-        let rendered = self.tera.render(template, &context)?;
-        Ok(axum::response::Html(rendered).into_response())
+        match self.tera.render(template, &context) {
+            Ok(rendered) => Ok(axum::response::Html(rendered).into_response()),
+            Err(e) => {
+                tracing::error!("Template rendering failed: {}", e);
+                Err(anyhow::anyhow!("Template error: {}", e))
+            }
+        }
     }
 }

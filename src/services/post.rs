@@ -109,39 +109,63 @@ impl PostService {
     }
 
     pub async fn get_post(&self, id: &str) -> Result<Post> {
-        let id_clone = id.to_owned();
+        let id_for_blocking = id.to_owned();
+        let id_for_error = id.to_owned();
         let pool = self.pool.clone();
         let query = task::spawn_blocking(move || {
             let conn = pool.get()?;
             let result = conn.query_row(
                 "SELECT * FROM posts WHERE id = ? AND content_type != 'special'",
-                [&id_clone],
+                [&id_for_blocking],
                 Self::row_to_post,
             )?;
             anyhow::Result::<_>::Ok(result)
         })
         .await
         .context("Failed to join blocking task")?
-        .context(format!("Failed to fetch post {}", id))?;
+        .map_err(|e| {
+            if let Some(sqlite_err) = e.downcast_ref::<rusqlite::Error>() {
+                match sqlite_err {
+                    rusqlite::Error::QueryReturnedNoRows => {
+                        anyhow::anyhow!("Post not found: {}", id_for_error)
+                    }
+                    _ => e.into()
+                }
+            } else {
+                e
+            }
+        })?;
 
         self.convert_to_post(query).await
     }
 
     pub async fn get_special_page(&self, id: &str) -> Result<Post> {
-        let id_clone = id.to_owned();
+        let id_for_blocking = id.to_owned();
+        let id_for_error = id.to_owned();
         let pool = self.pool.clone();
         let query = task::spawn_blocking(move || {
             let conn = pool.get()?;
             let result = conn.query_row(
                 "SELECT * FROM posts WHERE id = ? AND content_type = 'special'",
-                [&id_clone],
+                [&id_for_blocking],
                 Self::row_to_post,
             )?;
             anyhow::Result::<_>::Ok(result)
         })
         .await
         .context("Failed to join blocking task")?
-        .context(format!("Failed to fetch special page {}", id))?;
+        .map_err(|e| {
+            if let Some(sqlite_err) = e.downcast_ref::<rusqlite::Error>() {
+                match sqlite_err {
+                    rusqlite::Error::QueryReturnedNoRows => {
+                        anyhow::anyhow!("Special page not found: {}", id_for_error)
+                    }
+                    _ => e.into()
+                }
+            } else {
+                e
+            }
+        })?;
 
         self.convert_to_post(query).await
     }

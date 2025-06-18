@@ -46,15 +46,25 @@ pub async fn posts_index(pagination: Query<Pagination>, state: State<AppState>) 
     }
 }
 
-pub async fn about(state: State<AppState>) -> Response {
-    match state.post_service.get_special_page("about").await {
+async fn handle_special_page(state: State<AppState>, page_id: &str) -> Response {
+    match state.post_service.get_special_page(page_id).await {
         Ok(post) => {
             let mut context = Context::new();
             context.insert("post", &post);
-            state.render("post.html", &context).unwrap()
+            state.render("post.html", &context).unwrap_or_else(|e| {
+                tracing::error!("Rendering error: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            })
         }
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(e) => {
+            tracing::error!("Database error: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
+}
+
+pub async fn about(state: State<AppState>) -> Response {
+    handle_special_page(state, "about").await
 }
 
 pub async fn contact(state: State<AppState>) -> Response {
@@ -69,13 +79,27 @@ pub async fn contact(state: State<AppState>) -> Response {
 }
 
 pub async fn post(Path(id): Path<String>, state: State<AppState>) -> Response {
+    if id.is_empty() || id.len() > 100 {
+        return StatusCode::BAD_REQUEST.into_response();
+    }
+
     match state.post_service.get_post(&id).await {
         Ok(post) => {
             let mut context = Context::new();
             context.insert("post", &post);
-            state.render("post.html", &context).unwrap()
+            state.render("post.html", &context).unwrap_or_else(|e| {
+                tracing::error!("Rendering error: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            })
         }
-        Err(_) => (StatusCode::NOT_FOUND, "Post not found").into_response(),
+        Err(e) => {
+            if e.to_string().contains("not found") {
+                StatusCode::NOT_FOUND.into_response()
+            } else {
+                tracing::error!("Database error: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
+        }
     }
 }
 
