@@ -10,6 +10,7 @@ pub struct AppState {
     pub post_service: crate::services::post::PostService,
     pub search_service: crate::services::search::SearchService,
     pub tera: Tera,
+    pub build_id: String,
 }
 
 impl AppState {
@@ -19,6 +20,7 @@ impl AppState {
             post_service: crate::services::post::PostService::new(pool.clone()),
             search_service: crate::services::search::SearchService::new(pool),
             tera,
+            build_id: build_id::get().to_string(),
         }
     }
 
@@ -47,7 +49,9 @@ impl AppState {
     }
 
     pub fn render(&self, template: &str, context: &Context) -> Result<Response> {
-        let rendered = self.tera.render(template, context)?;
+        let mut context = context.clone();
+        context.insert("build_id", &self.build_id);
+        let rendered = self.tera.render(template, &context)?;
         Ok(axum::response::Html(rendered).into_response())
     }
 }
