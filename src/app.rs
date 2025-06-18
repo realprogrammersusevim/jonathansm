@@ -8,6 +8,7 @@ use tera::{Context, Tera};
 #[derive(Debug, Clone)]
 pub struct AppState {
     pub post_service: crate::services::post::PostService,
+    pub search_service: crate::services::search::SearchService,
     pub tera: Tera,
 }
 
@@ -15,7 +16,8 @@ impl AppState {
     pub fn new(pool: Pool<SqliteConnectionManager>) -> Self {
         let tera = Self::load_templates().unwrap();
         AppState {
-            post_service: crate::services::post::PostService::new(pool),
+            post_service: crate::services::post::PostService::new(pool.clone()),
+            search_service: crate::services::search::SearchService::new(pool),
             tera,
         }
     }

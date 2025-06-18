@@ -1,4 +1,4 @@
-use crate::app::AppState;
+use crate::{app::AppState, services::search_query::SearchQuery};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -18,6 +18,12 @@ pub async fn main_page(state: State<AppState>) -> Response {
         }
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SearchParams {
+    q: Option<String>,
+    page: Option<usize>,
 }
 
 #[derive(Deserialize)]
@@ -70,6 +76,37 @@ pub async fn post(Path(id): Path<String>, state: State<AppState>) -> Response {
             state.render("post.html", &context).unwrap()
         }
         Err(_) => (StatusCode::NOT_FOUND, "Post not found").into_response(),
+    }
+}
+
+pub async fn search(Query(params): Query<SearchParams>, state: State<AppState>) -> Response {
+    let query_str = params.q.unwrap_or_default();
+    let page = params.page.unwrap_or(1);
+    let per_page = 10;
+
+    let search_query = SearchQuery::from_raw(&query_str);
+    match state
+        .search_service
+        .search(&search_query, page, per_page)
+        .await
+    {
+        Ok((posts, total)) => {
+            let mut context = Context::new();
+            context.insert("query", &query_str);
+            context.insert("posts", &posts);
+            context.insert("current_page", &page);
+
+            let total_pages = (total as f64 / per_page as f64).ceil() as usize;
+            context.insert("total_pages", &total_pages);
+            context.insert("per_page", &per_page);
+            context.insert("total_results", &total);
+
+            state.render("search.html", &context).unwrap()
+        }
+        Err(err) => {
+            tracing::error!("Search failed: {:?}", err);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
 

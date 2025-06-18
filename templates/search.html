@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block content %}
+<main>
+  <h2>Search</h2>
+  <form action="/search" method="GET">
+    <input type="text" name="q" value="{{ query | default(value='') }}" 
+           placeholder="Search posts..." class="search-box">
+    <input type="submit" value="Search" class="search-btn">
+  </form>
+
+  {% if query %}
+    {% if total_results > 0 %}
+      <p>{{ total_results }} result{% if total_results != 1 %}s{% endif %} found</p>
+
+      {% if posts and posts | length > 0 %}
+    <ul>
+      {% for post in posts %}
+      <li>
+        {{ macros::render_post(post=post, is_index=true, show_permalink=true) }}
+      </li>
+      {% endfor %}
+    </ul>
+      {% endif %}
+
+      {% if total_pages > 1 %}
+    <div class="pagination">
+      {% if current_page > 1 %}
+        <a href="/search?q={{ query | urlencode }}&page={{ current_page - 1 }}">
+          &laquo; Previous
+        </a>
+      {% endif %}
+
+      <span>Page {{ current_page }} of {{ total_pages }}</span>
+
+      {% if current_page < total_pages %}
+        <a href="/search?q={{ query | urlencode }}&page={{ current_page + 1 }}">
+          Next &raquo;
+        </a>
+      {% endif %}
+    </div>
+      {% endif %}
+    {% else %}
+      <p>No results found for "{{ query }}"</p>
+    {% endif %}
+  {% endif %}
+</main>
+{% endblock %}

@@ -5,7 +5,7 @@ mod rss;
 mod services;
 
 use crate::app::AppState;
-use crate::routes::{about, contact, main_page, post, posts_index, Static, WellKnown};
+use crate::routes::{about, contact, main_page, post, posts_index, search, Static, WellKnown};
 use crate::rss::feed;
 use std::env;
 
@@ -59,6 +59,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(main_page))
+        .route("/search", get(search))
         .route("/posts", get(posts_index))
         .route("/about", get(about))
         .route("/contact", get(contact))
