@@ -6,6 +6,14 @@
   <h1>{{ post.title }}</h1>
   {% endif %}
   <p><small>Published on {{ post.date }}</small></p>
+  {% if post.tags and post.tags | length > 0 %}
+  <div class="tags">
+      <span>Tags: </span>
+      {% for tag in post.tags %}
+        <a href="/tag/{{ tag }}">{{ tag }}</a>{% if not loop.last %}, {% endif %}
+      {% endfor %}
+  </div>
+  {% endif %}
   <div>{{ post.content|safe }}</div>
 </article>
 {% endmacro post %}
@@ -19,6 +27,14 @@
   {% endif %} {% if post.via %} (<a href="{{ post.via }}">via</a>) {%
   endif %}
   <p><small>Published on {{ post.date }}</small></p>
+  {% if post.tags and post.tags | length > 0 %}
+  <div class="tags">
+      <span>Tags: </span>
+      {% for tag in post.tags %}
+        <a href="/tag/{{ tag }}">{{ tag }}</a>{% if not loop.last %}, {% endif %}
+      {% endfor %}
+  </div>
+  {% endif %}
   <div>{{ post.content|safe }}</div>
 </article>
 {% endmacro link %}
@@ -26,6 +42,14 @@
 {% macro quote(post) %}
 <article>
   <p><small>Published on {{ post.date }}</small></p>
+  {% if post.tags and post.tags | length > 0 %}
+  <div class="tags">
+      <span>Tags: </span>
+      {% for tag in post.tags %}
+        <a href="/tag/{{ tag }}">{{ tag }}</a>{% if not loop.last %}, {% endif %}
+      {% endfor %}
+  </div>
+  {% endif %}
   <blockquote>
     {{ post.content }}
     <footer>{{ post.quote_author|display_some }}</footer>

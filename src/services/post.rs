@@ -16,7 +16,7 @@ impl PostService {
         Self { pool }
     }
 
-    fn row_to_post(row: &rusqlite::Row) -> rusqlite::Result<Post> {
+    pub fn row_to_post(row: &rusqlite::Row) -> rusqlite::Result<Post> {
         let id: String = row.get("id")?;
         let content_type_str: String = row.get("content_type")?;
         let content_type = ContentType::from(content_type_str);
@@ -26,7 +26,11 @@ impl PostService {
         let quote_author: Option<String> = row.get("quote_author")?;
         let date: String = row.get("date")?;
         let content: String = row.get("content")?;
-        let commits: Option<String> = row.get("commits")?;
+        let commits_str: Option<String> = row.get("commits")?;
+        let commits = commits_str.and_then(|s| serde_json::from_str(&s).ok());
+
+        let tags_str: Option<String> = row.get("tags")?;
+        let tags = tags_str.and_then(|s| serde_json::from_str(&s).ok());
 
         Ok(Post {
             id,
@@ -38,6 +42,7 @@ impl PostService {
             date,
             content,
             commits,
+            tags,
             real_commits: None,
         })
     }
@@ -166,12 +171,12 @@ impl PostService {
             .map(|mut v| v.remove(0))
     }
 
-    async fn bulk_convert_to_posts(&self, mut posts: Vec<Post>) -> Result<Vec<Post>> {
+    pub async fn bulk_convert_to_posts(&self, mut posts: Vec<Post>) -> Result<Vec<Post>> {
         let all_commit_ids: Vec<_> = posts
             .iter()
             .filter_map(|post| post.commits.as_ref())
-            .flat_map(|commits| commits.split_whitespace())
-            .map(|s| s.to_owned())
+            .flatten()
+            .cloned()
             .collect();
 
         let commits_map = if !all_commit_ids.is_empty() {
@@ -215,9 +220,10 @@ impl PostService {
 
         for post in &mut posts {
             if let Some(ids) = &post.commits {
-                let real_commits: Vec<Commit> = ids
-                    .split_whitespace()
-                    .filter_map(|id| commits_map.get(id).cloned())
+                let real_commits = ids
+                    .iter()
+                    .filter_map(|id| commits_map.get(id))
+                    .cloned()
                     .collect();
                 post.real_commits = Some(real_commits);
             }
