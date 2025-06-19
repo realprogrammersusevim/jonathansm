@@ -8,8 +8,8 @@ another repo.
 
 ## TODO
 
-- [ ] Tagging
-- [ ] Search
+- [x] Tagging
+- [x] Search
 - [ ] Syntax highlighting
 - [x] Pagination
 - [ ] Global changelog
