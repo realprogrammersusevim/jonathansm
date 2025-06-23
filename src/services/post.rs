@@ -129,7 +129,7 @@ impl PostService {
                     rusqlite::Error::QueryReturnedNoRows => {
                         anyhow::anyhow!("Post not found: {}", id_for_error)
                     }
-                    _ => e.into()
+                    _ => e.into(),
                 }
             } else {
                 e
@@ -160,7 +160,7 @@ impl PostService {
                     rusqlite::Error::QueryReturnedNoRows => {
                         anyhow::anyhow!("Special page not found: {}", id_for_error)
                     }
-                    _ => e.into()
+                    _ => e.into(),
                 }
             } else {
                 e

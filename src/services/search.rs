@@ -31,7 +31,13 @@ impl SearchService {
             tags: query.tags.clone(),
             from_date: query.from_date.clone(),
             to_date: query.to_date.clone(),
+            post_type: Default::default(),
         };
+        let post_types_as_strings: Vec<String> = query
+            .post_type
+            .iter()
+            .map(|pt| pt.to_owned().into())
+            .collect();
         let offset = (page - 1) * per_page;
         let pool = self.pool.clone();
 
@@ -52,7 +58,9 @@ impl SearchService {
             }
 
             for tag in &owned_query.tags {
-                conditions.push("EXISTS (SELECT 1 FROM json_each(posts.tags) WHERE value = ?)".to_string());
+                conditions.push(
+                    "EXISTS (SELECT 1 FROM json_each(posts.tags) WHERE value = ?)".to_string(),
+                );
                 params.push(Box::new(tag));
             }
 
@@ -63,6 +71,18 @@ impl SearchService {
             if let Some(date) = &owned_query.to_date {
                 conditions.push("posts.date <= ?".to_string());
                 params.push(Box::new(date));
+            }
+
+            if !post_types_as_strings.is_empty() {
+                let placeholders = post_types_as_strings
+                    .iter()
+                    .map(|_| "?")
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                conditions.push(format!("posts.content_type IN ({})", placeholders));
+                for pt_str in &post_types_as_strings {
+                    params.push(Box::new(pt_str.clone()));
+                }
             }
 
             let where_clause = if !conditions.is_empty() {

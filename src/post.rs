@@ -26,6 +26,16 @@ impl From<String> for ContentType {
     }
 }
 
+impl Into<String> for ContentType {
+    fn into(self) -> String {
+        match self {
+            ContentType::Post => "post".into(),
+            ContentType::Link => "link".into(),
+            ContentType::Quote => "quote".into(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Post {
     pub id: String,
