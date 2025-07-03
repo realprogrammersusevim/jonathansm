@@ -24,9 +24,9 @@ impl From<Post> for RssEntry {
             ),
             ContentType::Link => {
                 let link_title = post.title.as_deref().unwrap_or("this link");
-                let title = format!("Link: {}", link_title);
+                let title = format!("Link: {link_title}");
                 let link_html = post.link.map_or_else(String::new, |link| {
-                    format!(r#"<p>Link: <a href="{}">{}</a></p>"#, link, link_title)
+                    format!(r#"<p>Link: <a href="{link}">{link_title}</a></p>"#)
                 });
                 (title, format!("{}{}", link_html, post.content))
             }
@@ -35,9 +35,9 @@ impl From<Post> for RssEntry {
                 let title = post
                     .title
                     .clone()
-                    .unwrap_or_else(|| format!("Quote from {}", author));
+                    .unwrap_or_else(|| format!("Quote from {author}"));
                 let attribution = post.quote_author.map_or_else(String::new, |name| {
-                    format!("<figcaption>— {}</figcaption>", name)
+                    format!("<figcaption>— {name}</figcaption>")
                 });
                 let blockquote =
                     format!("<blockquote>{}</blockquote>{}", post.content, attribution);
@@ -92,11 +92,10 @@ pub async fn feed(app: State<AppState>) -> impl IntoResponse {
                 <description>Jonathan's Blog</description>
                 <language>en-us</language>
                 <atom:link href="https://jonathansm.com/feed" rel="self" type="application/rss+xml" />
-                {}
+                {rss_items}
             </channel>
         </rss>
-        "#,
-        rss_items
+        "#
     );
 
     (

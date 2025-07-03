@@ -18,7 +18,6 @@ pub enum ContentType {
 impl From<String> for ContentType {
     fn from(s: String) -> Self {
         match s.as_str() {
-            "post" => ContentType::Post,
             "link" => ContentType::Link,
             "quote" => ContentType::Quote,
             _ => ContentType::Post,
@@ -26,9 +25,9 @@ impl From<String> for ContentType {
     }
 }
 
-impl Into<String> for ContentType {
-    fn into(self) -> String {
-        match self {
+impl From<ContentType> for String {
+    fn from(val: ContentType) -> Self {
+        match val {
             ContentType::Post => "post".into(),
             ContentType::Link => "link".into(),
             ContentType::Quote => "quote".into(),

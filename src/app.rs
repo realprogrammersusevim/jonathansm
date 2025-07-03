@@ -42,7 +42,7 @@ impl AppState {
 
             let content = std::str::from_utf8(&content_bytes)
                 .map_err(|_| anyhow::anyhow!("Template {} not valid UTF-8", path))?;
-            templates.push((path.into_owned(), content.to_owned()))
+            templates.push((path.into_owned(), content.to_owned()));
         }
 
         tera.add_raw_templates(templates)

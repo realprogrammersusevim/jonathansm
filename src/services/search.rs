@@ -19,6 +19,61 @@ impl SearchService {
         PostService::row_to_post(row)
     }
 
+    fn build_search_query(
+        owned_query: &SearchQuery,
+        post_types_as_strings: &[String],
+    ) -> (String, Vec<Box<dyn rusqlite::ToSql>>) {
+        let mut conditions = vec![];
+        let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![];
+
+        if !owned_query.text_query.is_empty() {
+            conditions.push("posts_fts MATCH ?".to_string());
+            params.push(Box::new(owned_query.text_query.clone()));
+        }
+
+        for tag in &owned_query.tags {
+            conditions.push(
+                "EXISTS (SELECT 1 FROM json_each(posts.tags) WHERE value = ?)".to_string(),
+            );
+            params.push(Box::new(tag.clone()));
+        }
+
+        if let Some(date) = &owned_query.from_date {
+            conditions.push("posts.date >= ?".to_string());
+            params.push(Box::new(date.clone()));
+        }
+        if let Some(date) = &owned_query.to_date {
+            conditions.push("posts.date <= ?".to_string());
+            params.push(Box::new(date.clone()));
+        }
+
+        if !post_types_as_strings.is_empty() {
+            let placeholders = post_types_as_strings
+                .iter()
+                .map(|_| "?")
+                .collect::<Vec<_>>()
+                .join(", ");
+            conditions.push(format!("posts.content_type IN ({placeholders})"));
+            for pt_str in post_types_as_strings {
+                params.push(Box::new(pt_str.clone()));
+            }
+        }
+
+        let where_clause = if conditions.is_empty() {
+            String::new()
+        } else {
+            format!("WHERE {}", conditions.join(" AND "))
+        };
+
+        let order_clause = if owned_query.text_query.is_empty() {
+            "ORDER BY date DESC".to_string()
+        } else {
+            "ORDER BY rank".to_string()
+        };
+
+        (format!("{where_clause} {order_clause}"), params)
+    }
+
     pub async fn search(
         &self,
         query: &SearchQuery,
@@ -31,7 +86,7 @@ impl SearchService {
             tags: query.tags.clone(),
             from_date: query.from_date.clone(),
             to_date: query.to_date.clone(),
-            post_type: Default::default(),
+            post_type: Vec::default(),
         };
         let post_types_as_strings: Vec<String> = query
             .post_type
@@ -49,60 +104,11 @@ impl SearchService {
                 "FROM posts INNER JOIN posts_fts ON posts.rowid = posts_fts.rowid".to_string()
             };
 
-            let mut conditions = vec![];
-            let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![];
-
-            if !owned_query.text_query.is_empty() {
-                conditions.push("posts_fts MATCH ?".to_string());
-                params.push(Box::new(owned_query.text_query.clone()));
-            }
-
-            for tag in &owned_query.tags {
-                conditions.push(
-                    "EXISTS (SELECT 1 FROM json_each(posts.tags) WHERE value = ?)".to_string(),
-                );
-                params.push(Box::new(tag));
-            }
-
-            if let Some(date) = &owned_query.from_date {
-                conditions.push("posts.date >= ?".to_string());
-                params.push(Box::new(date));
-            }
-            if let Some(date) = &owned_query.to_date {
-                conditions.push("posts.date <= ?".to_string());
-                params.push(Box::new(date));
-            }
-
-            if !post_types_as_strings.is_empty() {
-                let placeholders = post_types_as_strings
-                    .iter()
-                    .map(|_| "?")
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                conditions.push(format!("posts.content_type IN ({})", placeholders));
-                for pt_str in &post_types_as_strings {
-                    params.push(Box::new(pt_str.clone()));
-                }
-            }
-
-            let where_clause = if !conditions.is_empty() {
-                format!("WHERE {}", conditions.join(" AND "))
-            } else {
-                "".to_string()
-            };
-
-            let order_clause = if owned_query.text_query.is_empty() {
-                "ORDER BY date DESC".to_string()
-            } else {
-                "ORDER BY rank".to_string()
-            };
+            let (filter_clauses, mut params) = Self::build_search_query(&owned_query, &post_types_as_strings);
 
             // Prepare count query first (borrows params immutably)
             let count_query = format!(
-                "SELECT COUNT(*)
-                {}
-                {}",
-                base_query, where_clause
+                "SELECT COUNT(*) {base_query} {filter_clauses}"
             );
             let total: i64 = conn.query_row(
                 &count_query,
@@ -112,16 +118,13 @@ impl SearchService {
 
             // Main query to fetch posts (takes ownership of params)
             let posts_query = format!(
-                "SELECT posts.*
-                {}
-                {}
-                {}
-                LIMIT ? OFFSET ?",
-                base_query, where_clause, order_clause
+                "SELECT posts.* {base_query} {filter_clauses} LIMIT ? OFFSET ?"
             );
 
             let mut stmt = conn.prepare(&posts_query)?;
+            #[allow(clippy::cast_possible_wrap)]
             params.push(Box::new(per_page as i64));
+            #[allow(clippy::cast_possible_wrap)]
             params.push(Box::new(offset as i64));
 
             // Execute query and collect results
@@ -134,7 +137,7 @@ impl SearchService {
                 posts.push(post?);
             }
 
-            Ok::<_, anyhow::Error>((posts, total as usize))
+            Ok::<_, anyhow::Error>((posts, usize::try_from(total)?))
         })
         .await?
         .context("Search execution failed")?;

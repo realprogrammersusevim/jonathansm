@@ -83,10 +83,10 @@ pub async fn get_image(Path(id): Path<String>, state: State<AppState>) -> impl I
         return StatusCode::BAD_REQUEST.into_response();
     }
 
-    let filename = format!("images/{}", id);
+    let filename = format!("images/{id}");
     match state.image_service.get_image_data(&filename).await {
         Ok(Some(data)) => {
-            let content_type = match id.split('.').last() {
+            let content_type = match id.split('.').next_back() {
                 Some("png") => "image/png",
                 Some("jpg" | "jpeg") => "image/jpeg",
                 Some("gif") => "image/gif",
@@ -144,7 +144,7 @@ pub async fn search(Query(params): Query<SearchParams>, state: State<AppState>) 
             context.insert("posts", &posts);
             context.insert("current_page", &page);
 
-            let total_pages = (total as f64 / per_page as f64).ceil() as usize;
+            let total_pages = total.div_ceil(per_page);
             context.insert("total_pages", &total_pages);
             context.insert("per_page", &per_page);
             context.insert("total_results", &total);

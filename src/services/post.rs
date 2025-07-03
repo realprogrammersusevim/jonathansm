@@ -69,6 +69,7 @@ impl PostService {
 
     pub async fn get_paginated_posts(&self, page: usize) -> Result<(Vec<Post>, usize, usize)> {
         const POSTS_PER_PAGE: i64 = 10;
+        #[allow(clippy::cast_possible_wrap)]
         let offset = (page as i64 - 1) * POSTS_PER_PAGE;
 
         let pool = self.pool.clone();
@@ -102,7 +103,8 @@ impl PostService {
             .context("Failed to count posts")?
         };
 
-        let total_pages = (total_posts as f64 / POSTS_PER_PAGE as f64).ceil() as usize;
+        let total_pages = usize::try_from((total_posts + POSTS_PER_PAGE - 1) / POSTS_PER_PAGE)
+            .context("Total pages exceeds usize range")?;
         let posts = self.bulk_convert_to_posts(queried).await?;
 
         Ok((posts, page, total_pages))
@@ -129,7 +131,7 @@ impl PostService {
                     rusqlite::Error::QueryReturnedNoRows => {
                         anyhow::anyhow!("Post not found: {}", id_for_error)
                     }
-                    _ => e.into(),
+                    _ => e,
                 }
             } else {
                 e
@@ -160,7 +162,7 @@ impl PostService {
                     rusqlite::Error::QueryReturnedNoRows => {
                         anyhow::anyhow!("Special page not found: {}", id_for_error)
                     }
-                    _ => e.into(),
+                    _ => e,
                 }
             } else {
                 e
@@ -203,15 +205,16 @@ impl PostService {
             .cloned()
             .collect();
 
-        let commits_map = if !all_commit_ids.is_empty() {
+        let commits_map = if all_commit_ids.is_empty() {
+            HashMap::new()
+        } else {
             let pool = self.pool.clone();
             let ids = all_commit_ids.clone();
             task::spawn_blocking(move || {
                 let conn = pool.get()?;
                 let placeholders = ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
                 let sql = format!(
-                    "SELECT id, date, subject, body FROM commits WHERE id IN ({})",
-                    placeholders
+                    "SELECT id, date, subject, body FROM commits WHERE id IN ({placeholders})"
                 );
 
                 let mut stmt = conn.prepare(&sql)?;
@@ -238,8 +241,6 @@ impl PostService {
             })
             .await
             .context("Failed to join blocking task")??
-        } else {
-            HashMap::new()
         };
 
         for post in &mut posts {
