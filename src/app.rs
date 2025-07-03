@@ -1,3 +1,4 @@
+use crate::services::image::ImageService;
 use anyhow::Result;
 use axum::response::{IntoResponse, Response};
 use r2d2::Pool;
@@ -9,6 +10,7 @@ use tera::{Context, Tera};
 pub struct AppState {
     pub post_service: crate::services::post::PostService,
     pub search_service: crate::services::search::SearchService,
+    pub image_service: ImageService,
     pub tera: Tera,
     pub build_id: String,
 }
@@ -18,7 +20,8 @@ impl AppState {
         let tera = Self::load_templates().unwrap();
         AppState {
             post_service: crate::services::post::PostService::new(pool.clone()),
-            search_service: crate::services::search::SearchService::new(pool),
+            search_service: crate::services::search::SearchService::new(pool.clone()),
+            image_service: ImageService::new(pool),
             tera,
             build_id: build_id::get().to_string(),
         }

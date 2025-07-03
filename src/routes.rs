@@ -1,7 +1,7 @@
 use crate::{app::AppState, services::search_query::SearchQuery};
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{header, StatusCode},
     response::{IntoResponse, Response},
 };
 use rust_embed::RustEmbed;
@@ -74,6 +74,30 @@ pub async fn contact(state: State<AppState>) -> Response {
             context.insert("post", &post);
             state.render("post.html", &context).unwrap()
         }
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    }
+}
+
+pub async fn get_image(Path(id): Path<String>, state: State<AppState>) -> impl IntoResponse {
+    if id.is_empty() || id.len() > 100 {
+        return StatusCode::BAD_REQUEST.into_response();
+    }
+
+    let filename = format!("images/{}", id);
+    match state.image_service.get_image_data(&filename).await {
+        Ok(Some(data)) => {
+            let content_type = match id.split('.').last() {
+                Some("png") => "image/png",
+                Some("jpg" | "jpeg") => "image/jpeg",
+                Some("gif") => "image/gif",
+                Some("webp") => "image/webp",
+                Some("svg") => "image/svg+xml",
+                _ => "application/octet-stream",
+            };
+
+            (StatusCode::OK, [(header::CONTENT_TYPE, content_type)], data).into_response()
+        }
+        Ok(None) => StatusCode::NOT_FOUND.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }

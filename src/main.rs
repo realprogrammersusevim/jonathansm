@@ -5,7 +5,9 @@ mod rss;
 mod services;
 
 use crate::app::AppState;
-use crate::routes::{about, contact, main_page, post, posts_index, search, Static, WellKnown};
+use crate::routes::{
+    about, contact, get_image, main_page, post, posts_index, search, Static, WellKnown,
+};
 use crate::rss::feed;
 use std::env;
 
@@ -65,6 +67,7 @@ async fn main() {
         .route("/contact", get(contact))
         .route("/post/:id", get(post))
         .route("/feed", get(feed))
+        .route("/images/:id", get(get_image))
         .nest_service("/static", static_files)
         .nest_service("/.well-known", well_known)
         .layer(
