@@ -32,9 +32,8 @@ impl SearchService {
         }
 
         for tag in &owned_query.tags {
-            conditions.push(
-                "EXISTS (SELECT 1 FROM json_each(posts.tags) WHERE value = ?)".to_string(),
-            );
+            conditions
+                .push("EXISTS (SELECT 1 FROM json_each(posts.tags) WHERE value = ?)".to_string());
             params.push(Box::new(tag.clone()));
         }
 
@@ -104,12 +103,11 @@ impl SearchService {
                 "FROM posts INNER JOIN posts_fts ON posts.rowid = posts_fts.rowid".to_string()
             };
 
-            let (filter_clauses, mut params) = Self::build_search_query(&owned_query, &post_types_as_strings);
+            let (filter_clauses, mut params) =
+                Self::build_search_query(&owned_query, &post_types_as_strings);
 
             // Prepare count query first (borrows params immutably)
-            let count_query = format!(
-                "SELECT COUNT(*) {base_query} {filter_clauses}"
-            );
+            let count_query = format!("SELECT COUNT(*) {base_query} {filter_clauses}");
             let total: i64 = conn.query_row(
                 &count_query,
                 rusqlite::params_from_iter(params.iter().map(|p| &**p)),
@@ -117,9 +115,8 @@ impl SearchService {
             )?;
 
             // Main query to fetch posts (takes ownership of params)
-            let posts_query = format!(
-                "SELECT posts.* {base_query} {filter_clauses} LIMIT ? OFFSET ?"
-            );
+            let posts_query =
+                format!("SELECT posts.* {base_query} {filter_clauses} LIMIT ? OFFSET ?");
 
             let mut stmt = conn.prepare(&posts_query)?;
             #[allow(clippy::cast_possible_wrap)]
