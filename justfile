@@ -12,6 +12,9 @@ alias ar := auto-reload
 auto-reload:
   fd -t f -e rs -e html | entr -r cargo run
 
+lint:
+  cargo clippy --fix --bin "jonathansm" --allow-dirty -- -D clippy::correctness -W clippy::suspicious -W clippy::complexity -D clippy::perf -W clippy::style -W clippy::pedantic
+
 test:
   cargo test
 
