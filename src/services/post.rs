@@ -197,6 +197,25 @@ impl PostService {
             .map(|mut v| v.remove(0))
     }
 
+    pub async fn get_all_post_urls(&self) -> Result<Vec<(String, String)>> {
+        let pool = self.pool.clone();
+        task::spawn_blocking(move || {
+            let conn = pool.get()?;
+            let mut stmt = conn.prepare(
+                "SELECT id, date FROM posts WHERE content_type != 'special' ORDER BY date DESC",
+            )?;
+            let iter = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?;
+            let mut result = Vec::new();
+            for url in iter {
+                result.push(url?);
+            }
+            anyhow::Result::<_, anyhow::Error>::Ok(result)
+        })
+        .await
+        .context("Failed to join blocking task")?
+        .context("Failed to fetch post URLs")
+    }
+
     pub async fn bulk_convert_to_posts(&self, mut posts: Vec<Post>) -> Result<Vec<Post>> {
         let all_commit_ids: Vec<_> = posts
             .iter()

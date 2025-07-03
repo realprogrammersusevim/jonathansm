@@ -1,11 +1,13 @@
 use crate::{app::AppState, services::search_query::SearchQuery};
 use axum::{
     extract::{Path, Query, State},
-    http::{header, StatusCode},
+    http::{header, HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
+use chrono::DateTime;
 use rust_embed::RustEmbed;
 use serde::Deserialize;
+use std::fmt::Write;
 use tera::Context;
 
 pub async fn main_page(state: State<AppState>) -> Response {
@@ -165,3 +167,51 @@ pub struct Static;
 #[derive(RustEmbed, Clone)]
 #[folder = ".well-known/"]
 pub struct WellKnown;
+
+pub async fn sitemap(state: State<AppState>) -> Response {
+    const BASE_URL: &str = "https://jonathansm.com";
+
+    let mut entries = String::new();
+
+    // Add static pages
+    let static_pages = [
+        "https://jonathansm.com/",
+        "https://jonathansm.com/about",
+        "https://jonathansm.com/contact",
+        "https://jonathansm.com/posts",
+        "https://jonathansm.com/feed",
+    ];
+
+    for url in &static_pages {
+        write!(entries, "<url><loc>{url}</loc></url>").unwrap();
+    }
+
+    // Add blog posts with last modified dates
+    if let Ok(post_entries) = state.post_service.get_all_post_urls().await {
+        for (id, date_str) in post_entries {
+            let url = format!("{BASE_URL}/post/{id}");
+            if let Ok(date) = DateTime::parse_from_rfc3339(&date_str) {
+                let w3c_date = date.to_rfc3339();
+                write!(
+                    entries,
+                    r"<url><loc>{url}</loc><lastmod>{w3c_date}</lastmod></url>"
+                )
+                .unwrap();
+            } else {
+                write!(entries, "<url><loc>{url}</loc></url>").unwrap();
+            }
+        }
+    }
+
+    let sitemap = format!(
+        r#"<?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+            {entries}
+        </urlset>"#
+    );
+
+    let mut headers = HeaderMap::new();
+    headers.insert(header::CONTENT_TYPE, "application/xml".parse().unwrap());
+
+    (StatusCode::OK, headers, sitemap).into_response()
+}
