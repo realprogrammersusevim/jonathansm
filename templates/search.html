@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% import "macros.html" as macros %}
 
+{% block header %}
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
 {% block content %}
 <main>
   <form action="/search" method="GET" class="search-form">
