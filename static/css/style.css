@@ -30,6 +30,11 @@ h1, h2, h3 {
     font-family: 'Lato', sans-serif;
 }
 
+:where(h1) {
+    font-size: 2em;
+    margin-block: 0.67em;
+}
+
 h1 a, h2 a, h3 a {
     color: inherit;
     text-decoration: none;
