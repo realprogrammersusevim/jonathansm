@@ -4,11 +4,9 @@
 {% block content %}
 <main>
   <h2>All Posts</h2>
-  <ul>
+  <ul class="summary-list">
   {% for post in posts %}
-  <li>
-    {{ macros::render_post(post=post, is_index=true, show_permalink=true) }}
-  </li>
+    {{ macros::summary_item(post=post) }}
   {% endfor %}
   </ul>
 

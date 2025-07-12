@@ -248,3 +248,32 @@ p > a[href^="/post/"] {
 .pagination span {
     color: #666;
 }
+
+/* Summary List Styles */
+.summary-list {
+    list-style: none;
+    padding: 0;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-date {
+    color: #666;
+    font-size: 0.9em;
+    white-space: nowrap;
+    margin-right: 20px;
+}
+
+.summary-title {
+    flex-grow: 1;
+    text-align: left;
+}

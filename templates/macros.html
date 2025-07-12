@@ -76,7 +76,7 @@
 {% endif %}
 {% endmacro commits %}
 
-{% macro render_post(post, is_index=false, show_permalink=false, show_commits=false) %}
+{% macro render_post(post, is_index=false, show_permalink=false, show_commits=false, show_related=false) %}
   {% if post.content_type == "Post" %}
     {{ self::post(post=post, is_index=is_index) }}
   {% elif post.content_type == "Link" %}
@@ -87,7 +87,37 @@
     {% if show_permalink %}<p><a href="/post/{{ post.id }}">Permalink</a></p>{% endif %}
   {% endif %}
 
+  <hr>
+
   {% if show_commits %}
     {{ self::commits(post=post) }}
   {% endif %}
+
+  {% if show_related and post.related_posts %}
+  <br>
+  <section class="related-posts">
+    <h3>Related Posts</h3>
+    <ul class="summary-list">
+      {% for related_post in post.related_posts %}
+        {{ macros::summary_item(post=related_post) }}
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
 {% endmacro render_post %}
+
+{% macro summary_item(post) %}
+  <li class="summary-item">
+    <span class="summary-date">{{ post.date }}</span>
+    <span class="summary-title">
+      {% if post.content_type == "Post" %}
+        <a href="/post/{{ post.id }}">{{ post.title | default(value="Untitled Post") }}</a>
+      {% elif post.content_type == "Link" %}
+        <a href="{{ post.link | default(value="#") }}">{% if post.title %}{{ post.title }}{% else %}{{ post.link }}{% endif %}</a>
+        (<a href="/post/{{ post.id }}">permalink</a>)
+      {% elif post.content_type == "Quote" %}
+        <a href="/post/{{ post.id }}">Quote from {{ post.quote_author | default(value="Unknown") }}</a>
+      {% endif %}
+    </span>
+  </li>
+{% endmacro summary_item %}

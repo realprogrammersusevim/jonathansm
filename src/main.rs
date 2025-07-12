@@ -17,7 +17,9 @@ use axum::{
     Router,
 };
 use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::ffi::sqlite3_auto_extension;
 use rusqlite::OpenFlags;
+use sqlite_vec::sqlite3_vec_init;
 use tower_http::trace::TraceLayer;
 use tracing::info_span;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -25,11 +27,14 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
+    unsafe {
+        sqlite3_auto_extension(Some(std::mem::transmute(sqlite3_vec_init as *const ())));
+    }
     let manager =
         SqliteConnectionManager::file(env::var("DATABASE_URL").expect("No DATABASE_URL set"))
             .with_flags(OpenFlags::SQLITE_OPEN_READ_ONLY);
     let pool = r2d2::Pool::builder()
-        .max_size(15)
+        .max_size(16)
         .build(manager)
         .expect("Can't build pool");
     let state = AppState::new(pool);

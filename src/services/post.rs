@@ -1,10 +1,11 @@
-use crate::post::{Commit, ContentType, Post};
+use crate::post::{Commit, ContentType, Post, SummaryPost};
 use anyhow::{Context, Result};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::params;
 use std::collections::HashMap;
 use tokio::task;
+use tracing;
 
 #[derive(Debug, Clone)]
 pub struct PostService {
@@ -44,6 +45,19 @@ impl PostService {
             commits,
             tags,
             real_commits: None,
+            related_posts: None,
+        })
+    }
+
+    fn row_to_summary_post(row: &rusqlite::Row) -> rusqlite::Result<SummaryPost> {
+        Ok(SummaryPost {
+            id: row.get("id")?,
+            content_type: ContentType::from(row.get::<_, String>("content_type")?),
+            title: row.get("title")?,
+            link: row.get("link")?,
+            via: row.get("via")?,
+            quote_author: row.get("quote_author")?,
+            date: row.get("date")?,
         })
     }
 
@@ -138,7 +152,20 @@ impl PostService {
             }
         })?;
 
-        self.convert_to_post(query).await
+        let mut post = self.convert_to_post(query).await?;
+
+        match self.get_related_posts(&post.id).await {
+            Ok(related_posts) => {
+                if !related_posts.is_empty() {
+                    post.related_posts = Some(related_posts);
+                }
+            }
+            Err(e) => {
+                tracing::error!("Failed to get related posts for {}: {}", post.id, e);
+            }
+        }
+
+        Ok(post)
     }
 
     pub async fn get_special_page(&self, id: &str) -> Result<Post> {
@@ -170,6 +197,77 @@ impl PostService {
         })?;
 
         self.convert_to_post(query).await
+    }
+
+    async fn get_related_posts(&self, id: &str) -> Result<Vec<SummaryPost>> {
+        let id_for_blocking = id.to_owned();
+        let pool = self.pool.clone();
+
+        let related_ids: Vec<String> = task::spawn_blocking(move || {
+            let conn = pool.get()?;
+
+            let embedding: Vec<u8> =
+                match conn.query_row("SELECT embedding FROM post_embeddings WHERE id = ?", [&id_for_blocking], |row| row.get(0)) {
+                    Ok(embedding) => embedding,
+                    Err(rusqlite::Error::QueryReturnedNoRows) => return Ok(vec![]),
+                    Err(e) => return Err(e.into()),
+                };
+
+            let mut stmt = conn.prepare(
+                r"
+                SELECT id FROM post_embeddings
+                WHERE embedding MATCH ?1 AND id != ?2
+                ORDER BY distance
+                LIMIT 3
+                ",
+            )?;
+            let ids_iter = stmt.query_map(params![embedding, &id_for_blocking], |row| {
+                row.get::<_, String>(0)
+            })?;
+
+            let mut ids = Vec::new();
+            for id_result in ids_iter {
+                ids.push(id_result?);
+            }
+
+            anyhow::Result::<_>::Ok(ids)
+        })
+        .await??;
+
+        if related_ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let pool = self.pool.clone();
+        let related_ids_for_query = related_ids.clone();
+        let posts = task::spawn_blocking(move || {
+            let conn = pool.get()?;
+            let placeholders = related_ids_for_query.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+            let sql = format!("SELECT id, content_type, title, link, via, quote_author, date FROM posts WHERE id IN ({placeholders})");
+            let mut stmt = conn.prepare(&sql)?;
+
+            let post_iter =
+                stmt.query_map(rusqlite::params_from_iter(related_ids_for_query.iter()), Self::row_to_summary_post)?;
+
+            let mut posts = Vec::new();
+            for post in post_iter {
+                posts.push(post?);
+            }
+            anyhow::Result::<_>::Ok(posts)
+        })
+        .await??;
+
+        let mut posts_map = posts
+            .into_iter()
+            .map(|p| (p.id.clone(), p))
+            .collect::<HashMap<_, _>>();
+
+        let ordered_posts = related_ids
+            .into_iter()
+            .filter_map(|id| posts_map.remove(&id))
+            .collect();
+
+        Ok(ordered_posts)
     }
 
     pub async fn get_rss_entries(&self) -> Result<Vec<Post>> {
