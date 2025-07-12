@@ -16,13 +16,7 @@
       <p>{{ total_results }} result{% if total_results != 1 %}s{% endif %} found</p>
 
       {% if posts and posts | length > 0 %}
-    <ul>
-      {% for post in posts %}
-      <li>
-        {{ macros::render_post(post=post, is_index=true, show_permalink=true) }}
-      </li>
-      {% endfor %}
-    </ul>
+        {{ macros::summary_list(summaries=posts) }}
       {% endif %}
 
       {% if total_pages > 1 %}

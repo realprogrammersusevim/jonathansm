@@ -266,13 +266,6 @@ p > a[href^="/post/"] {
     border-bottom: none;
 }
 
-.summary-date {
-    color: #666;
-    font-size: 0.9em;
-    white-space: nowrap;
-    margin-right: 20px;
-}
-
 .summary-title {
     flex-grow: 1;
     text-align: left;

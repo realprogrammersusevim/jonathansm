@@ -2,7 +2,6 @@ use super::{post::PostService, search_query::SearchQuery};
 use anyhow::Context;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::Row;
 use tokio::task;
 
 #[derive(Clone, Debug)]
@@ -13,10 +12,6 @@ pub struct SearchService {
 impl SearchService {
     pub fn new(pool: Pool<SqliteConnectionManager>) -> Self {
         Self { pool }
-    }
-
-    fn row_to_post(row: &Row) -> rusqlite::Result<crate::post::Post> {
-        PostService::row_to_post(row)
     }
 
     fn build_search_query(
@@ -78,7 +73,7 @@ impl SearchService {
         query: &SearchQuery,
         page: usize,
         per_page: usize,
-    ) -> anyhow::Result<(Vec<crate::post::Post>, usize)> {
+    ) -> anyhow::Result<(Vec<crate::post::SummaryPost>, usize)> {
         // Create a full clone of the query data to move into the thread
         let owned_query = SearchQuery {
             text_query: query.text_query.clone(),
@@ -115,8 +110,9 @@ impl SearchService {
             )?;
 
             // Main query to fetch posts (takes ownership of params)
-            let posts_query =
-                format!("SELECT posts.* {base_query} {filter_clauses} LIMIT ? OFFSET ?");
+            let posts_query = format!(
+                "SELECT posts.id, posts.content_type, posts.title, posts.link, posts.via, posts.quote_author, posts.date {base_query} {filter_clauses} LIMIT ? OFFSET ?"
+            );
 
             let mut stmt = conn.prepare(&posts_query)?;
             #[allow(clippy::cast_possible_wrap)]
@@ -127,7 +123,7 @@ impl SearchService {
             // Execute query and collect results
             let iter = stmt.query_map(
                 rusqlite::params_from_iter(params.iter().map(|p| &**p)),
-                Self::row_to_post,
+                PostService::row_to_summary_post,
             )?;
             let mut posts = Vec::new();
             for post in iter {
@@ -139,9 +135,6 @@ impl SearchService {
         .await?
         .context("Search execution failed")?;
 
-        let post_service = PostService::new(self.pool.clone());
-        let posts_with_commits = post_service.bulk_convert_to_posts(posts).await?;
-
-        Ok((posts_with_commits, total))
+        Ok((posts, total))
     }
 }
