@@ -12,4 +12,4 @@ another repo.
 - [x] Search
 - [ ] Syntax highlighting
 - [x] Pagination
-- [ ] Global changelog
+- [x] Related posts with embedding similarities
