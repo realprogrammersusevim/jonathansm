@@ -87,7 +87,9 @@
     {% if show_permalink %}<p><a href="/post/{{ post.id }}">Permalink</a></p>{% endif %}
   {% endif %}
 
-  <hr>
+  {% if not is_index %}
+    <hr>
+  {% endif %}
 
   {% if show_commits %}
     {{ self::commits(post=post) }}
