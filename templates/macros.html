@@ -115,7 +115,7 @@
 {% macro summary_item(post) %}
   <li class="summary-item">
     <div class="summary-title">
-      {% if post.content_type == 'link' %}
+      {% if post.content_type == 'Link' %}
         <a href="{{ post.link | safe }}">{{ post.title | default(value="Link") }} &rarr;</a>
       {% else %}
         <a href="/post/{{ post.id }}">{{ post.title | default(value="Untitled") }}</a>
@@ -123,8 +123,11 @@
     </div>
     <div class="summary-post-meta">
       <time datetime="{{ post.date }}">{{ post.date }}</time>
-      &middot; <a href="/post/{{ post.id }}">permalink</a>
-      {% if post.content_type == 'quote' and post.quote_author %}
+      {% if post.content_type == 'Link' or post.content_type == 'Quote' %}
+        &middot;
+        <a href="/post/{{ post.id }}">permalink</a>
+      {% endif %}
+      {% if post.content_type == 'Quote' and post.quote_author %}
         &middot; from {{ post.quote_author }}
       {% endif %}
       {% if post.via %}
