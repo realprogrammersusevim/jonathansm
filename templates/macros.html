@@ -97,14 +97,14 @@
   <br>
   <section class="related-posts">
     <h3>Related Posts</h3>
-    {{ self::summary_list(summaries=related_posts) }}
+    {{ self::summary_list(summaries=post.related_posts) }}
   </section>
   {% endif %}
 {% endmacro render_post %}
 
 {% macro summary_list(summaries) %}
   <ul class="summary-list">
-    {% for post in posts %}
+    {% for post in summaries %}
       {{ self::summary_item(post=post) }}
     {% endfor %}
   </ul>
