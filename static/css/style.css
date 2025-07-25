@@ -270,3 +270,37 @@ p > a[href^="/post/"] {
     flex-grow: 1;
     text-align: left;
 }
+
+/* Sidenote / Footnote styles */
+
+/* Reference marker styling */
+sup[id^="ref-"] {
+    font-size: 0.75em;
+}
+
+/* Wide screens: show footnotes as sidenotes */
+@media (min-width: 80em) {
+    .sidenote {
+        float: right;            /* place in right margin */
+        clear: right;            /* stack notes */
+        width: 16rem;            /* adjust to match design */
+        /* keep the sidenote completely outside the main column with a wider gap */
+        margin-right: calc(-16rem - 3rem);    /* pull fully into right margin with a 3 rem gap */
+        margin-left: 2rem;       /* match the 2 rem gap from the main text */
+        font-size: 0.85em;
+        line-height: 1.25;
+    }
+}
+
+/* Narrow & medium screens: fall back to inline footnotes */
+@media (max-width: 79.99em) {
+    .sidenote {
+        display: block;
+        float: none;
+        clear: both;
+        width: auto;
+        margin: 0.5em 0;
+        font-size: 0.85em;
+        line-height: 1.25;
+    }
+}
