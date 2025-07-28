@@ -5,7 +5,7 @@
   {% else %}
   <h1>{{ post.title }}</h1>
   {% endif %}
-  <p><small>Published on {{ post.date }}</small></p>
+  <p><small>Published on {{ post.date }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated on {{ post.last_updated }}{% endif %}{% endif %}</small></p>
   {% if post.tags and post.tags | length > 0 %}
   <div class="tags">
       <span>Tags: </span>
@@ -26,7 +26,7 @@
   <a href="{{ post.link }}">{{ post.link }}</a>
   {% endif %} {% if post.via %} (<a href="{{ post.via }}">via</a>) {%
   endif %}
-  <p><small>Published on {{ post.date }}</small></p>
+  <p><small>Published on {{ post.date }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated on {{ post.last_updated }}{% endif %}{% endif %}</small></p>
   {% if post.tags and post.tags | length > 0 %}
   <div class="tags">
       <span>Tags: </span>
@@ -41,7 +41,7 @@
 
 {% macro quote(post) %}
 <article>
-  <p><small>Published on {{ post.date }}</small></p>
+  <p><small>Published on {{ post.date }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated on {{ post.last_updated }}{% endif %}{% endif %}</small></p>
   {% if post.tags and post.tags | length > 0 %}
   <div class="tags">
       <span>Tags: </span>

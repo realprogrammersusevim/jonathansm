@@ -56,6 +56,7 @@ impl PostService {
             via,
             quote_author,
             date,
+            last_updated: None,
             content,
             commits,
             tags,
@@ -328,11 +329,23 @@ impl PostService {
 
         for post in &mut posts {
             if let Some(ids) = &post.commits {
-                let real_commits = ids
+                let real_commits: Vec<Commit> = ids
                     .iter()
                     .filter_map(|id| commits_map.get(id))
                     .cloned()
                     .collect();
+
+                // If the post has commits, set `last_updated` to the date of the first (most
+                // recent) commit
+                if !real_commits.is_empty() {
+                    if let Some(first_id) = ids.first() {
+                        if let Some(first_commit) = real_commits.iter().find(|c| &c.id == first_id)
+                        {
+                            post.last_updated = Some(first_commit.date.clone());
+                        }
+                    }
+                }
+
                 post.real_commits = Some(real_commits);
             }
         }

@@ -44,6 +44,7 @@ pub struct Post {
     pub via: Option<String>,
     pub quote_author: Option<String>,
     pub date: String,
+    pub last_updated: Option<String>,
     pub content: String,
     #[serde(skip_serializing)]
     pub commits: Option<Vec<String>>,
