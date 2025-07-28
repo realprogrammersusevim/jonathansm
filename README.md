@@ -13,3 +13,4 @@ another repo.
 - [ ] Syntax highlighting
 - [x] Pagination
 - [x] Related posts with embedding similarities
+- [x] Last updated extracted from git metadata
