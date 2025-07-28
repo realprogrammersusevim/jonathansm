@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.98"
+arc-swap = "1.7.1"
 axum = "0.7.7"
 axum-embed = "0.1.0"
 build_id = { git = "https://github.com/realprogrammersusevim/build_id.git" }

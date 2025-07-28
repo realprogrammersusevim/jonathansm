@@ -1,0 +1,90 @@
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
+
+use anyhow::Result;
+use arc_swap::ArcSwap;
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::OpenFlags;
+use tokio::{fs, sync::RwLock};
+
+#[derive(Debug)]
+pub struct DbHandles {
+    pub primary: ArcSwap<Pool<SqliteConnectionManager>>,
+    pub draining: RwLock<Option<Arc<Pool<SqliteConnectionManager>>>>,
+    pub primary_path: RwLock<PathBuf>,
+}
+
+impl DbHandles {
+    pub fn new(initial_pool: Pool<SqliteConnectionManager>, initial_path: PathBuf) -> Arc<Self> {
+        Arc::new(Self {
+            primary: ArcSwap::from(Arc::new(initial_pool)),
+            draining: RwLock::new(None),
+            primary_path: RwLock::new(initial_path),
+        })
+    }
+
+    pub async fn swap_primary(
+        self: &Arc<Self>,
+        new_pool: Pool<SqliteConnectionManager>,
+        new_path: PathBuf,
+    ) {
+        let old_pool = self.primary.swap(Arc::new(new_pool));
+
+        {
+            let mut draining_guard = self.draining.write().await;
+            *draining_guard = Some(old_pool.clone());
+        }
+
+        let old_path = {
+            let mut path_guard = self.primary_path.write().await;
+            let old = path_guard.clone();
+            *path_guard = new_path;
+            old
+        };
+
+        tokio::spawn(Self::drain_and_delete(self.clone(), old_pool, old_path));
+    }
+
+    async fn drain_and_delete(
+        self: Arc<Self>,
+        pool: Arc<Pool<SqliteConnectionManager>>,
+        path: PathBuf,
+    ) {
+        let mut attempts = 0;
+        loop {
+            let state = pool.state();
+            if state.connections == 0 && state.idle_connections == 0 {
+                // All connections are returned – drop the pool and remove the file.
+                drop(pool);
+                if let Err(e) = fs::remove_file(&path).await {
+                    eprintln!("Failed to delete old DB file {path:?}: {e}");
+                } else {
+                    println!("Deleted old DB file {path:?}");
+                }
+
+                // Clear the draining slot so no dangling Arc keeps the pool alive.
+                let mut draining_guard = self.draining.write().await;
+                *draining_guard = None;
+
+                break;
+            }
+            attempts += 1;
+            if attempts > 60 {
+                eprintln!("Timeout draining old pool for {path:?}. File not deleted.");
+                break;
+            }
+            tokio::time::sleep(Duration::from_secs(10)).await;
+        }
+    }
+}
+
+pub fn init_pool(path: &Path) -> Result<Pool<SqliteConnectionManager>> {
+    let manager = SqliteConnectionManager::file(path)
+        .with_flags(OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_URI);
+    let pool = Pool::builder().max_size(16).build(manager)?;
+    Ok(pool)
+}

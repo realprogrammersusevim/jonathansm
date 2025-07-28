@@ -1,17 +1,17 @@
 use super::{post::PostService, search_query::SearchQuery};
+use crate::db::DbHandles;
 use anyhow::Context;
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
+use std::sync::Arc;
 use tokio::task;
 
 #[derive(Clone, Debug)]
 pub struct SearchService {
-    pool: Pool<SqliteConnectionManager>,
+    db: Arc<DbHandles>,
 }
 
 impl SearchService {
-    pub fn new(pool: Pool<SqliteConnectionManager>) -> Self {
-        Self { pool }
+    pub fn new(db: Arc<DbHandles>) -> Self {
+        Self { db }
     }
 
     fn build_search_query(
@@ -88,7 +88,7 @@ impl SearchService {
             .map(|pt| pt.to_owned().into())
             .collect();
         let offset = (page - 1) * per_page;
-        let pool = self.pool.clone();
+        let pool = self.db.primary.load();
 
         let (posts, total) = task::spawn_blocking(move || {
             let conn = pool.get()?;

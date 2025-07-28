@@ -9,6 +9,40 @@ use rust_embed::RustEmbed;
 use serde::Deserialize;
 use std::fmt::Write;
 use tera::Context;
+use tokio::fs;
+
+async fn update_database_url_env(new_path: &std::path::Path) -> anyhow::Result<()> {
+    const ENV_FILE: &str = ".env";
+    let env_path = std::path::Path::new(ENV_FILE);
+
+    // Read existing contents (if any)
+    let contents = if env_path.exists() {
+        fs::read_to_string(env_path).await?
+    } else {
+        String::new()
+    };
+
+    // Split into lines, update or append DATABASE_URL
+    let mut lines: Vec<String> = contents
+        .lines()
+        .map(std::string::ToString::to_string)
+        .collect();
+    let mut updated = false;
+    for line in &mut lines {
+        if line.starts_with("DATABASE_URL=") {
+            *line = format!("DATABASE_URL={}", new_path.display());
+            updated = true;
+            break;
+        }
+    }
+    if !updated {
+        lines.push(format!("DATABASE_URL={}", new_path.display()));
+    }
+
+    // Write back
+    fs::write(env_path, lines.join("\n")).await?;
+    Ok(())
+}
 
 pub async fn main_page(state: State<AppState>) -> Response {
     match state.post_service.get_main_posts().await {
@@ -158,6 +192,38 @@ pub async fn search(Query(params): Query<SearchParams>, state: State<AppState>) 
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
+}
+
+pub async fn switch_db(
+    Path(filename): Path<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    if filename.is_empty() || filename.contains('/') || filename.len() > 200 {
+        return StatusCode::BAD_REQUEST.into_response();
+    }
+
+    let new_path = std::path::PathBuf::from(format!("./{filename}"));
+
+    if !new_path.exists() {
+        return StatusCode::NOT_FOUND.into_response();
+    }
+
+    let pool = match crate::db::init_pool(&new_path) {
+        Ok(p) => p,
+        Err(e) => {
+            tracing::error!("Failed to init new pool: {}", e);
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+    };
+
+    state.db.swap_primary(pool, new_path.clone()).await;
+
+    // Persist new DB path so the next server restart uses it
+    if let Err(e) = update_database_url_env(&new_path).await {
+        tracing::error!("Failed to update .env file: {}", e);
+    }
+
+    (StatusCode::OK, format!("Database switched to {filename}")).into_response()
 }
 
 #[derive(RustEmbed, Clone)]

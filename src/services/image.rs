@@ -1,22 +1,22 @@
+use crate::db::DbHandles;
 use anyhow::Result;
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::params;
+use std::sync::Arc;
 use tokio::task;
 
 #[derive(Clone, Debug)]
 pub struct ImageService {
-    pool: Pool<SqliteConnectionManager>,
+    db: Arc<DbHandles>,
 }
 
 impl ImageService {
-    pub fn new(pool: Pool<SqliteConnectionManager>) -> Self {
-        Self { pool }
+    pub fn new(db: Arc<DbHandles>) -> Self {
+        Self { db }
     }
 
     pub async fn get_image_data(&self, filename: &str) -> Result<Option<Vec<u8>>> {
         let filename = filename.to_owned();
-        let pool = self.pool.clone();
+        let pool = self.db.primary.load();
 
         task::spawn_blocking(move || {
             let conn = pool.get()?;

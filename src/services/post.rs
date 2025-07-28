@@ -1,20 +1,21 @@
+use crate::db::DbHandles;
 use crate::post::{Commit, ContentType, Post, SummaryPost};
 use anyhow::{Context, Result};
-use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::params;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::task;
 use tracing;
 
 #[derive(Debug, Clone)]
 pub struct PostService {
-    pool: Pool<SqliteConnectionManager>,
+    db: Arc<DbHandles>,
 }
 
 impl PostService {
-    pub fn new(pool: Pool<SqliteConnectionManager>) -> Self {
-        Self { pool }
+    pub fn new(db: Arc<DbHandles>) -> Self {
+        Self { db }
     }
 
     async fn run_db_query<F, T>(&self, query_fn: F) -> Result<T>
@@ -22,7 +23,7 @@ impl PostService {
         F: FnOnce(r2d2::PooledConnection<SqliteConnectionManager>) -> Result<T> + Send + 'static,
         T: Send + 'static,
     {
-        let pool = self.pool.clone();
+        let pool = self.db.primary.load();
         task::spawn_blocking(move || {
             let conn = pool.get()?;
             query_fn(conn)

@@ -1,4 +1,5 @@
 mod app;
+mod db;
 mod post;
 mod routes;
 mod rss;
@@ -6,19 +7,18 @@ mod services;
 
 use crate::app::AppState;
 use crate::routes::{
-    about, contact, get_image, main_page, post, posts_index, search, sitemap, Static, WellKnown,
+    about, contact, get_image, main_page, post as post_detail, posts_index, search, sitemap,
+    switch_db, Static, WellKnown,
 };
 use crate::rss::feed;
-use std::env;
+use std::{env, path::PathBuf};
 
 use axum::{
     extract::{MatchedPath, Request},
-    routing::get,
+    routing::{get, post},
     Router,
 };
-use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::ffi::sqlite3_auto_extension;
-use rusqlite::OpenFlags;
 use sqlite_vec::sqlite3_vec_init;
 use tower_http::trace::TraceLayer;
 use tracing::info_span;
@@ -31,14 +31,10 @@ async fn main() {
         #[allow(clippy::missing_transmute_annotations)]
         sqlite3_auto_extension(Some(std::mem::transmute(sqlite3_vec_init as *const ())));
     }
-    let manager =
-        SqliteConnectionManager::file(env::var("DATABASE_URL").expect("No DATABASE_URL set"))
-            .with_flags(OpenFlags::SQLITE_OPEN_READ_ONLY);
-    let pool = r2d2::Pool::builder()
-        .max_size(16)
-        .build(manager)
-        .expect("Can't build pool");
-    let state = AppState::new(pool);
+    let db_path = PathBuf::from(env::var("DATABASE_URL").expect("No DATABASE_URL set"));
+    let initial_pool = crate::db::init_pool(&db_path).expect("Failed to create initial DB pool");
+    let db_handles = crate::db::DbHandles::new(initial_pool, db_path.clone());
+    let state = AppState::new(db_handles.clone());
 
     let static_files = axum_embed::ServeEmbed::<Static>::with_parameters(
         None,
@@ -72,8 +68,9 @@ async fn main() {
         .route("/posts", get(posts_index))
         .route("/about", get(about))
         .route("/contact", get(contact))
-        .route("/post/:id", get(post))
+        .route("/post/:id", get(post_detail))
         .route("/feed", get(feed))
+        .route("/admin/switch_db/:filename", post(switch_db))
         .route("/images/:id", get(get_image))
         .nest_service("/static", static_files)
         .nest_service("/.well-known", well_known)

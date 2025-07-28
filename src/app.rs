@@ -1,13 +1,14 @@
+use crate::db::DbHandles;
 use crate::services::image::ImageService;
 use anyhow::Result;
 use axum::response::{IntoResponse, Response};
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
 use rust_embed::RustEmbed;
+use std::sync::Arc;
 use tera::{Context, Tera};
 
 #[derive(Debug, Clone)]
 pub struct AppState {
+    pub db: Arc<DbHandles>,
     pub post_service: crate::services::post::PostService,
     pub search_service: crate::services::search::SearchService,
     pub image_service: ImageService,
@@ -16,14 +17,15 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(pool: Pool<SqliteConnectionManager>) -> Self {
+    pub fn new(db: Arc<DbHandles>) -> Self {
         let tera = Self::load_templates().unwrap();
         AppState {
-            post_service: crate::services::post::PostService::new(pool.clone()),
-            search_service: crate::services::search::SearchService::new(pool.clone()),
-            image_service: ImageService::new(pool),
+            post_service: crate::services::post::PostService::new(db.clone()),
+            search_service: crate::services::search::SearchService::new(db.clone()),
+            image_service: ImageService::new(db.clone()),
             tera,
             build_id: build_id::get().to_string(),
+            db,
         }
     }
 
