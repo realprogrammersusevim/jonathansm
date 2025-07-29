@@ -9,7 +9,6 @@ use rust_embed::RustEmbed;
 use serde::Deserialize;
 use std::fmt::Write;
 use tera::Context;
-use tokio::fs;
 
 pub async fn main_page(state: State<AppState>) -> Response {
     match state.post_service.get_main_posts().await {

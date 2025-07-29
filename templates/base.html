@@ -34,7 +34,7 @@
     {% block content %} {% endblock %}
 
     <footer>
-      <p>&copy; 2022-2025</p>
+      <p>&copy; 2022-{{ now() | date(format="%Y") }}</p>
     </footer>
   </body>
 </html>
