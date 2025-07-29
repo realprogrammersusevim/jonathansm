@@ -95,7 +95,7 @@ impl SearchService {
             let base_query = if owned_query.text_query.is_empty() {
                 "FROM posts".to_string()
             } else {
-                "FROM posts INNER JOIN posts_fts ON posts.rowid = posts_fts.rowid".to_string()
+                "FROM posts INNER JOIN posts_fts ON posts.id = posts_fts.id".to_string()
             };
 
             let (filter_clauses, mut params) =
@@ -110,9 +110,15 @@ impl SearchService {
             )?;
 
             // Main query to fetch posts (takes ownership of params)
-            let posts_query = format!(
-                "SELECT posts.id, posts.content_type, posts.title, posts.link, posts.via, posts.quote_author, posts.date {base_query} {filter_clauses} LIMIT ? OFFSET ?"
-            );
+            let posts_query = if owned_query.text_query.is_empty() {
+                format!(
+                    "SELECT posts.id, posts.content_type, posts.title, posts.link, posts.via, posts.quote_author, posts.date {base_query} {filter_clauses} LIMIT ? OFFSET ?"
+                )
+            } else {
+                format!(
+                    "SELECT posts.id, posts.content_type, posts.title, posts.link, posts.via, posts.quote_author, posts.date, bm25(posts_fts) AS rank {base_query} {filter_clauses} LIMIT ? OFFSET ?"
+                )
+            };
 
             let mut stmt = conn.prepare(&posts_query)?;
             #[allow(clippy::cast_possible_wrap)]
