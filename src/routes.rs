@@ -11,39 +11,6 @@ use std::fmt::Write;
 use tera::Context;
 use tokio::fs;
 
-async fn update_database_url_env(new_path: &std::path::Path) -> anyhow::Result<()> {
-    const ENV_FILE: &str = ".env";
-    let env_path = std::path::Path::new(ENV_FILE);
-
-    // Read existing contents (if any)
-    let contents = if env_path.exists() {
-        fs::read_to_string(env_path).await?
-    } else {
-        String::new()
-    };
-
-    // Split into lines, update or append DATABASE_URL
-    let mut lines: Vec<String> = contents
-        .lines()
-        .map(std::string::ToString::to_string)
-        .collect();
-    let mut updated = false;
-    for line in &mut lines {
-        if line.starts_with("DATABASE_URL=") {
-            *line = format!("DATABASE_URL={}", new_path.display());
-            updated = true;
-            break;
-        }
-    }
-    if !updated {
-        lines.push(format!("DATABASE_URL={}", new_path.display()));
-    }
-
-    // Write back
-    fs::write(env_path, lines.join("\n")).await?;
-    Ok(())
-}
-
 pub async fn main_page(state: State<AppState>) -> Response {
     match state.post_service.get_main_posts().await {
         Ok(posts) => {
@@ -219,7 +186,7 @@ pub async fn switch_db(
     state.db.swap_primary(pool, new_path.clone()).await;
 
     // Persist new DB path so the next server restart uses it
-    if let Err(e) = update_database_url_env(&new_path).await {
+    if let Err(e) = crate::db::update_database_url_env(&new_path).await {
         tracing::error!("Failed to update .env file: {}", e);
     }
 

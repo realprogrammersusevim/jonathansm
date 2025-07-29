@@ -88,3 +88,36 @@ pub fn init_pool(path: &Path) -> Result<Pool<SqliteConnectionManager>> {
     let pool = Pool::builder().max_size(16).build(manager)?;
     Ok(pool)
 }
+
+pub async fn update_database_url_env(new_path: &std::path::Path) -> anyhow::Result<()> {
+    const ENV_FILE: &str = ".env";
+    let env_path = std::path::Path::new(ENV_FILE);
+
+    // Read existing contents (if any)
+    let contents = if env_path.exists() {
+        fs::read_to_string(env_path).await?
+    } else {
+        String::new()
+    };
+
+    // Split into lines, update or append DATABASE_URL
+    let mut lines: Vec<String> = contents
+        .lines()
+        .map(std::string::ToString::to_string)
+        .collect();
+    let mut updated = false;
+    for line in &mut lines {
+        if line.starts_with("DATABASE_URL=") {
+            *line = format!("DATABASE_URL={}", new_path.display());
+            updated = true;
+            break;
+        }
+    }
+    if !updated {
+        lines.push(format!("DATABASE_URL={}", new_path.display()));
+    }
+
+    // Write back
+    fs::write(env_path, lines.join("\n")).await?;
+    Ok(())
+}
