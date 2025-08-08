@@ -72,15 +72,21 @@ nav {
     margin-top: 10px;
 }
 
-nav a {
+nav a,
+nav a:visited {
     color: #333; /* Match header text color */
     margin: 0 15px;
     text-decoration: none;
     font-weight: normal; /* Less bold */
 }
 
-a {
-    color: #0056b3; /* A standard blue for links */
+a:link {
+    color: #0056b3; /* Unvisited links: standard blue */
+    text-decoration: none;
+}
+
+a:visited {
+    color: #551A8B; /* Visited links: standard purple */
     text-decoration: none;
 }
 
@@ -182,7 +188,14 @@ footer p {
 /* Style for permalinks */
 p > a[href^="/post/"] {
     font-size: 0.9em;
+}
+
+p > a[href^="/post/"]:link {
     color: #666;
+}
+
+p > a[href^="/post/"]:visited {
+    color: #551A8B;
 }
 
 /* Search Form Styles */
