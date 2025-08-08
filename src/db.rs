@@ -57,18 +57,25 @@ impl DbHandles {
         let mut attempts = 0;
         loop {
             let state = pool.state();
-            if state.connections == 0 && state.idle_connections == 0 {
-                // All connections are returned – drop the pool and remove the file.
+            if state.connections == state.idle_connections {
+                // No active connections – close idle ones, drop the pool, and remove the file.
+
+                // First clear the reference stored in `self.draining` so it no longer keeps the
+                // pool alive.
+                {
+                    let mut draining_guard = self.draining.write().await;
+                    *draining_guard = None;
+                }
+
+                // Drop the Arc we hold. This will close any idle connections.
                 drop(pool);
+
+                // Now it should be safe to delete the underlying file.
                 if let Err(e) = fs::remove_file(&path).await {
                     eprintln!("Failed to delete old DB file {path:?}: {e}");
                 } else {
                     println!("Deleted old DB file {path:?}");
                 }
-
-                // Clear the draining slot so no dangling Arc keeps the pool alive.
-                let mut draining_guard = self.draining.write().await;
-                *draining_guard = None;
 
                 break;
             }
