@@ -85,11 +85,10 @@ async fn main() {
         )
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind(format!(
-        "0.0.0.0:{}",
-        &env::var("PORT").expect("No PORT set")
-    ))
-    .await
-    .expect("Failed to bind port");
+    let port = &env::var("PORT").expect("No PORT set");
+    println!("Serving HTTP on :: port {port} (http://0.0.0.0:{port}/) ...");
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
+        .await
+        .expect("Failed to bind port");
     axum::serve(listener, app).await.unwrap();
 }
