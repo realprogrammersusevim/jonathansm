@@ -201,23 +201,29 @@ h3 {
     font-size: 20px; /* Larger post title */
 }
 
-/* Blockquote Styles */
-blockquote {
-    position: relative; /* Positioning for pseudo-element */
-    margin: 20px 0; /* Space around blockquotes */
-    padding-left: 20px; /* Space for the vertical line */
-    color: #555; /* Slightly lighter text color */
-    font-style: italic; /* More traditional academic style */
-    border-left: 4px solid var(--color-border); /* Lighter border */
-    background-color: transparent; /* More minimal blockquote */
-    padding: 10px 20px; /* Padding inside blockquotes */
-    border-radius: 0; /* Sharp corners */
+/* Quote component styles (figure.quote) */
+figure.quote {
+    margin: 20px 0;
+    padding: 0;
+    background: transparent;
 }
 
-blockquote footer {
+figure.quote blockquote {
+    position: relative;
+    margin: 0;
+    color: #555;
+    font-style: italic;
+    border-left: 4px solid var(--color-border);
+    background-color: transparent;
+    padding: 10px 20px;
+    border-radius: 0;
+}
+
+figure.quote figcaption {
     font-style: normal;
     margin-top: 10px;
     color: var(--color-muted);
+    padding-left: 24px; /* align with blockquote text after border */
 }
 
 /* Responsive images */
