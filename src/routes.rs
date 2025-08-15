@@ -189,7 +189,7 @@ pub async fn switch_db(
         tracing::error!("Failed to update .env file: {}", e);
     }
 
-    (StatusCode::OK, format!("Database switched to {filename}")).into_response()
+    (StatusCode::OK, format!("Database switched to {filename}\n")).into_response()
 }
 
 #[derive(RustEmbed, Clone)]
