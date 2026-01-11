@@ -20,12 +20,13 @@
 
 {% macro link(post) %}
 <article>
-  {% if post.title %}
-  <a href="{{ post.link }}">{{ post.title }}</a>
-  {% else %}
-  <a href="{{ post.link }}">{{ post.link }}</a>
-  {% endif %} {% if post.via %} (<a href="{{ post.via }}">via</a>) {%
-  endif %}
+  {% set link_title = post.title | default(value=post.link) %}
+  <h3>
+    <a href="{{ post.link }}">{{ link_title }}</a>
+    {% if post.via %}
+    (<a href="{{ post.via }}">via</a>)
+    {% endif %}
+  </h3>
   <p><small>Published on {{ post.date }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated on {{ post.last_updated }}{% endif %}{% endif %}</small></p>
   {% if post.tags and post.tags | length > 0 %}
   <div class="tags">
