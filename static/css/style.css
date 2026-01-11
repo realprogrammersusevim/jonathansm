@@ -1,6 +1,6 @@
   /* General Styles */
 :root {
-  --font-body: 'Lora', serif;
+  --font-body: 'fbb', serif;
   --font-heading: 'Lato', sans-serif;
   --font-mono: 'Courier New', Courier, monospace;
 
@@ -34,6 +34,7 @@
 
 body {
     font-family: var(--font-body); /* Classic serif font for readability */
+    font-size: 18px;
     line-height: 1.7;
     margin: 0;
     padding: 0;
