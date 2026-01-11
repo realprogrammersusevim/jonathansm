@@ -138,6 +138,7 @@ nav a:visited {
     margin: 0 15px;
     text-decoration: none;
     font-weight: normal; /* Less bold */
+    font-family: var(--font-heading)
 }
 
 a:link {
