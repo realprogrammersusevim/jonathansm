@@ -8,9 +8,8 @@
   <p><small>Published on {{ post.date }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated on {{ post.last_updated }}{% endif %}{% endif %}</small></p>
   {% if post.tags and post.tags | length > 0 %}
   <div class="tags">
-      <span>Tags: </span>
       {% for tag in post.tags %}
-        <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>{% if not loop.last %}, {% endif %}
+        <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>
       {% endfor %}
   </div>
   {% endif %}
@@ -35,9 +34,8 @@
   <p><small>Published on {{ post.date }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated on {{ post.last_updated }}{% endif %}{% endif %}</small></p>
   {% if post.tags and post.tags | length > 0 %}
   <div class="tags">
-      <span>Tags: </span>
       {% for tag in post.tags %}
-        <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>{% if not loop.last %}, {% endif %}
+        <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>
       {% endfor %}
   </div>
   {% endif %}
@@ -50,9 +48,8 @@
   <p><small>Published on {{ post.date }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated on {{ post.last_updated }}{% endif %}{% endif %}</small></p>
   {% if post.tags and post.tags | length > 0 %}
   <div class="tags">
-      <span>Tags: </span>
       {% for tag in post.tags %}
-        <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>{% if not loop.last %}, {% endif %}
+        <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>
       {% endfor %}
   </div>
   {% endif %}

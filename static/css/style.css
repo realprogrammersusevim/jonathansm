@@ -383,6 +383,32 @@ p > a[href^="/post/"]:visited {
     text-align: left;
 }
 
+/* Tag pills */
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 4px 0;
+}
+
+.tags a {
+    background: var(--color-code-bg);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.85em;
+    color: var(--color-mid);
+    text-decoration: none;
+}
+
+.tags a:visited {
+    color: var(--color-mid);
+}
+
+.tags a:hover {
+    text-decoration: none;
+    color: var(--color-text);
+}
+
 /* Sidenote / Footnote styles */
 
 /* Reference marker styling */
