@@ -14,7 +14,12 @@
       {% endfor %}
   </div>
   {% endif %}
+  {% if is_index %}
+  {% set total_words = post.content | striptags | wordcount %}
+  <p class="post-excerpt">{{ post.content | striptags | truncate(length=500) }}<br><a href="/post/{{ post.id }}">Read more (~{{ total_words }} words)</a></p>
+  {% else %}
   <div>{{ post.content|safe }}</div>
+  {% endif %}
 </article>
 {% endmacro post %}
 
