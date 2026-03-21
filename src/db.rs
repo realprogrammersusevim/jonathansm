@@ -93,6 +93,7 @@ impl DbHandles {
 }
 
 pub fn init_pool(path: &Path) -> Result<Pool<SqliteConnectionManager>> {
+    anyhow::ensure!(path.exists(), "database file not found: {}", path.display());
     let manager = SqliteConnectionManager::file(path)
         .with_flags(OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_URI);
     let pool = Pool::builder().max_size(16).build(manager)?;
