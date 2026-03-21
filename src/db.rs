@@ -99,6 +99,38 @@ pub fn init_pool(path: &Path) -> Result<Pool<SqliteConnectionManager>> {
     Ok(pool)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::Connection;
+
+    fn make_temp_sqlite() -> PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "jonathansm_db_test_{}.db",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .subsec_nanos()
+        ));
+        Connection::open(&path).unwrap(); // creates the file
+        path
+    }
+
+    #[test]
+    fn init_pool_valid_path_returns_ok() {
+        let path = make_temp_sqlite();
+        let result = init_pool(&path);
+        assert!(result.is_ok(), "expected Ok for valid SQLite path");
+    }
+
+    #[test]
+    fn init_pool_nonexistent_path_returns_err() {
+        let path = PathBuf::from("/nonexistent/path/no_such_file.db");
+        let result = init_pool(&path);
+        assert!(result.is_err(), "expected Err for nonexistent path");
+    }
+}
+
 pub async fn update_database_url_env(new_path: &std::path::Path) -> anyhow::Result<()> {
     const ENV_FILE: &str = ".env";
     let env_path = std::path::Path::new(ENV_FILE);

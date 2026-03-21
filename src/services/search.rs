@@ -144,3 +144,118 @@ impl SearchService {
         Ok((posts, total))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::services::search_query::SearchQuery;
+    use crate::services::test_helpers::test_db;
+
+    fn search_service() -> SearchService {
+        let (db, _) = test_db();
+        SearchService::new(db)
+    }
+
+    #[tokio::test]
+    async fn empty_query_returns_all_posts() {
+        let svc = search_service();
+        let q = SearchQuery::from_raw("");
+        // 12 regular + 1 special = 13 total rows; search has no special filter
+        let (_, total) = svc.search(&q, 1, 100).await.unwrap();
+        assert_eq!(total, 13);
+    }
+
+    #[tokio::test]
+    async fn text_query_finds_matching_posts() {
+        let svc = search_service();
+        // post-03 content = "golang article about performance"
+        let q = SearchQuery::from_raw("golang");
+        let (posts, total) = svc.search(&q, 1, 10).await.unwrap();
+        assert_eq!(total, 1);
+        assert_eq!(posts[0].id, "post-03");
+    }
+
+    #[tokio::test]
+    async fn text_query_no_match_returns_empty() {
+        let svc = search_service();
+        let q = SearchQuery::from_raw("xyzzy_no_such_word");
+        let (posts, total) = svc.search(&q, 1, 10).await.unwrap();
+        assert_eq!(total, 0);
+        assert!(posts.is_empty());
+    }
+
+    #[tokio::test]
+    async fn tag_filter_returns_only_tagged_posts() {
+        let svc = search_service();
+        // post-01 and post-02 have tag "rust"
+        let q = SearchQuery::from_raw("tag:rust");
+        let (posts, total) = svc.search(&q, 1, 10).await.unwrap();
+        assert_eq!(total, 2);
+        let ids: Vec<&str> = posts.iter().map(|p| p.id.as_str()).collect();
+        assert!(ids.contains(&"post-01"));
+        assert!(ids.contains(&"post-02"));
+    }
+
+    #[tokio::test]
+    async fn from_date_excludes_earlier_posts() {
+        let svc = search_service();
+        // Only post-01 (2024-01-12) and post-02 (2024-01-11) are on or after 2024-01-11
+        let q = SearchQuery::from_raw("from:2024-01-11");
+        let (_, total) = svc.search(&q, 1, 100).await.unwrap();
+        assert_eq!(total, 2);
+    }
+
+    #[tokio::test]
+    async fn to_date_excludes_later_posts() {
+        let svc = search_service();
+        // Dates are stored as "2024-01-NNT00:00:00Z"; string comparison means
+        // "2024-01-01T..." < "2024-01-02", so "to:2024-01-02" captures post-12.
+        let q = SearchQuery::from_raw("to:2024-01-02");
+        let (posts, _total) = svc.search(&q, 1, 100).await.unwrap();
+        let regular: Vec<_> = posts.iter().filter(|p| p.id != "about").collect();
+        assert_eq!(regular.len(), 1);
+        assert_eq!(regular[0].id, "post-12");
+    }
+
+    #[tokio::test]
+    async fn type_filter_link_returns_only_links() {
+        let svc = search_service();
+        let q = SearchQuery::from_raw("type:link");
+        let (posts, total) = svc.search(&q, 1, 10).await.unwrap();
+        assert_eq!(total, 1);
+        assert_eq!(posts[0].id, "post-01");
+    }
+
+    #[tokio::test]
+    async fn type_filter_quote_returns_only_quotes() {
+        let svc = search_service();
+        let q = SearchQuery::from_raw("type:quote");
+        let (posts, total) = svc.search(&q, 1, 10).await.unwrap();
+        assert_eq!(total, 1);
+        assert_eq!(posts[0].id, "post-02");
+    }
+
+    #[tokio::test]
+    async fn pagination_page2_returns_correct_slice() {
+        let svc = search_service();
+        let q = SearchQuery::from_raw("");
+        let (page1, _) = svc.search(&q, 1, 5).await.unwrap();
+        let (page2, _) = svc.search(&q, 2, 5).await.unwrap();
+        assert_eq!(page1.len(), 5);
+        assert_eq!(page2.len(), 5);
+        // No overlap between pages
+        let ids1: std::collections::HashSet<&str> = page1.iter().map(|p| p.id.as_str()).collect();
+        let ids2: std::collections::HashSet<&str> = page2.iter().map(|p| p.id.as_str()).collect();
+        assert!(ids1.is_disjoint(&ids2));
+    }
+
+    #[tokio::test]
+    async fn combined_tag_and_type_filter() {
+        let svc = search_service();
+        // post-01 is a link with tag "rust"; post-02 is a quote with tag "rust"
+        let q = SearchQuery::from_raw("tag:rust type:link");
+        let (posts, total) = svc.search(&q, 1, 10).await.unwrap();
+        assert_eq!(total, 1);
+        assert_eq!(posts[0].id, "post-01");
+    }
+}

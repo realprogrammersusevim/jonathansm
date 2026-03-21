@@ -63,3 +63,63 @@ pub struct SummaryPost {
     pub quote_author: Option<String>,
     pub date: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn content_type_from_string_post() {
+        assert!(matches!(
+            ContentType::from("post".to_string()),
+            ContentType::Post
+        ));
+    }
+
+    #[test]
+    fn content_type_from_string_link() {
+        assert!(matches!(
+            ContentType::from("link".to_string()),
+            ContentType::Link
+        ));
+    }
+
+    #[test]
+    fn content_type_from_string_quote() {
+        assert!(matches!(
+            ContentType::from("quote".to_string()),
+            ContentType::Quote
+        ));
+    }
+
+    #[test]
+    fn content_type_from_string_unknown_defaults_to_post() {
+        assert!(matches!(
+            ContentType::from("unknown".to_string()),
+            ContentType::Post
+        ));
+    }
+
+    #[test]
+    fn content_type_from_string_uppercase_defaults_to_post() {
+        assert!(matches!(
+            ContentType::from("POST".to_string()),
+            ContentType::Post
+        ));
+    }
+
+    #[test]
+    fn string_from_content_type_post() {
+        assert_eq!(String::from(ContentType::Post), "post");
+    }
+
+    #[test]
+    fn string_from_content_type_link() {
+        assert_eq!(String::from(ContentType::Link), "link");
+    }
+
+    #[test]
+    fn string_from_content_type_quote() {
+        assert_eq!(String::from(ContentType::Quote), "quote");
+    }
+}

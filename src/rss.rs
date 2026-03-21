@@ -74,6 +74,79 @@ impl RssEntry {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::post::{ContentType, Post};
+
+    fn base_post(content_type: ContentType) -> Post {
+        Post {
+            id: "test-post".to_string(),
+            content_type,
+            title: Some("My Title".to_string()),
+            link: None,
+            via: None,
+            quote_author: None,
+            date: "2023-01-01T00:00:00Z".to_string(),
+            last_updated: None,
+            content: "<p>Body text</p>".to_string(),
+            commits: None,
+            tags: None,
+            real_commits: None,
+            related_posts: None,
+        }
+    }
+
+    #[test]
+    fn rss_entry_from_post_type() {
+        let entry = RssEntry::from(base_post(ContentType::Post));
+        assert_eq!(entry.title, "My Title");
+        assert_eq!(entry.content, "<p>Body text</p>");
+        assert!(entry.guid.contains("test-post"));
+    }
+
+    #[test]
+    fn rss_entry_from_post_type_untitled() {
+        let mut post = base_post(ContentType::Post);
+        post.title = None;
+        let entry = RssEntry::from(post);
+        assert_eq!(entry.title, "Untitled");
+    }
+
+    #[test]
+    fn rss_entry_from_link_type() {
+        let mut post = base_post(ContentType::Link);
+        post.link = Some("https://example.com".to_string());
+        let entry = RssEntry::from(post);
+        assert_eq!(entry.title, "Link: My Title");
+        assert!(entry.content.contains(r#"href="https://example.com""#));
+        assert!(entry.content.contains("<p>Body text</p>"));
+    }
+
+    #[test]
+    fn rss_entry_from_quote_type() {
+        let mut post = base_post(ContentType::Quote);
+        post.title = None;
+        post.quote_author = Some("Alice".to_string());
+        let entry = RssEntry::from(post);
+        assert_eq!(entry.title, "Quote from Alice");
+        assert!(entry.content.contains("<blockquote>"));
+        assert!(entry.content.contains("<figcaption>"));
+        assert!(entry.content.contains("Alice"));
+    }
+
+    #[test]
+    fn rss_entry_to_xml_structure() {
+        let entry = RssEntry::from(base_post(ContentType::Post));
+        let xml = entry.to_xml();
+        assert!(xml.contains("<item>"));
+        assert!(xml.contains("</item>"));
+        assert!(xml.contains(r#"isPermalink="true""#));
+        assert!(xml.contains("<![CDATA["));
+        assert!(xml.contains("]]>"));
+    }
+}
+
 pub async fn feed(app: State<AppState>) -> impl IntoResponse {
     let entries = app.0.post_service.get_rss_entries().await.unwrap();
     let rss_items: String = entries

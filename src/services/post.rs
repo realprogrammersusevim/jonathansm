@@ -353,3 +353,183 @@ impl PostService {
         Ok(posts)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::services::test_helpers::test_db;
+
+    fn post_service() -> PostService {
+        let (db, _) = test_db();
+        PostService::new(db)
+    }
+
+    // --- get_main_posts ---
+
+    #[tokio::test]
+    async fn get_main_posts_returns_at_most_5() {
+        let svc = post_service();
+        let posts = svc.get_main_posts().await.unwrap();
+        assert!(posts.len() <= 5);
+    }
+
+    #[tokio::test]
+    async fn get_main_posts_excludes_special() {
+        let svc = post_service();
+        let posts = svc.get_main_posts().await.unwrap();
+        assert!(posts.iter().all(|p| p.id != "about"));
+    }
+
+    #[tokio::test]
+    async fn get_main_posts_ordered_by_date_desc() {
+        let svc = post_service();
+        let posts = svc.get_main_posts().await.unwrap();
+        let dates: Vec<&str> = posts.iter().map(|p| p.date.as_str()).collect();
+        let mut sorted = dates.clone();
+        sorted.sort_unstable_by(|a, b| b.cmp(a));
+        assert_eq!(dates, sorted);
+    }
+
+    // --- get_paginated_posts ---
+
+    #[tokio::test]
+    async fn get_paginated_posts_page1_has_10_posts() {
+        let svc = post_service();
+        let (posts, page, total_pages) = svc.get_paginated_posts(1).await.unwrap();
+        assert_eq!(posts.len(), 10);
+        assert_eq!(page, 1);
+        assert_eq!(total_pages, 2); // 12 regular posts, 10 per page
+    }
+
+    #[tokio::test]
+    async fn get_paginated_posts_page2_has_remaining() {
+        let svc = post_service();
+        let (posts, page, _) = svc.get_paginated_posts(2).await.unwrap();
+        assert_eq!(posts.len(), 2);
+        assert_eq!(page, 2);
+    }
+
+    #[tokio::test]
+    async fn get_paginated_posts_excludes_special() {
+        let svc = post_service();
+        let (posts, _, _) = svc.get_paginated_posts(1).await.unwrap();
+        assert!(posts.iter().all(|p| p.id != "about"));
+    }
+
+    // --- get_all_post_urls ---
+
+    #[tokio::test]
+    async fn get_all_post_urls_ordered_by_date_desc() {
+        let svc = post_service();
+        let urls = svc.get_all_post_urls().await.unwrap();
+        let dates: Vec<&str> = urls.iter().map(|(_, d)| d.as_str()).collect();
+        let mut sorted = dates.clone();
+        sorted.sort_unstable_by(|a, b| b.cmp(a));
+        assert_eq!(dates, sorted);
+    }
+
+    #[tokio::test]
+    async fn get_all_post_urls_excludes_special() {
+        let svc = post_service();
+        let urls = svc.get_all_post_urls().await.unwrap();
+        assert!(urls.iter().all(|(id, _)| id != "about"));
+    }
+
+    #[tokio::test]
+    async fn get_all_post_urls_returns_12_entries() {
+        let svc = post_service();
+        let urls = svc.get_all_post_urls().await.unwrap();
+        assert_eq!(urls.len(), 12);
+    }
+
+    // --- get_post ---
+
+    #[tokio::test]
+    async fn get_post_returns_correct_post() {
+        let svc = post_service();
+        let post = svc.get_post("post-03").await.unwrap();
+        assert_eq!(post.id, "post-03");
+        assert_eq!(post.title.as_deref(), Some("Golang Post"));
+    }
+
+    #[tokio::test]
+    async fn get_post_not_found_returns_error() {
+        let svc = post_service();
+        let err = svc.get_post("nonexistent").await.unwrap_err();
+        assert!(
+            err.to_string().contains("not found"),
+            "expected 'not found' in: {err}"
+        );
+    }
+
+    #[tokio::test]
+    async fn get_post_cannot_fetch_special_page() {
+        let svc = post_service();
+        let err = svc.get_post("about").await.unwrap_err();
+        assert!(
+            err.to_string().contains("not found"),
+            "expected 'not found' in: {err}"
+        );
+    }
+
+    // --- get_special_page ---
+
+    #[tokio::test]
+    async fn get_special_page_returns_about() {
+        let svc = post_service();
+        let post = svc.get_special_page("about").await.unwrap();
+        assert_eq!(post.id, "about");
+    }
+
+    #[tokio::test]
+    async fn get_special_page_cannot_fetch_regular_post() {
+        let svc = post_service();
+        let err = svc.get_special_page("post-01").await.unwrap_err();
+        assert!(
+            err.to_string().contains("not found"),
+            "expected 'not found' in: {err}"
+        );
+    }
+
+    // --- bulk_convert_to_posts / commit resolution ---
+
+    #[tokio::test]
+    async fn bulk_convert_sets_last_updated_to_most_recent_commit() {
+        let svc = post_service();
+        // post-02 has commits ["commit-2","commit-1"]; commit-2 date is 2024-01-12
+        let post = svc.get_post("post-02").await.unwrap();
+        assert_eq!(
+            post.last_updated.as_deref(),
+            Some("2024-01-12T00:00:00Z"),
+            "last_updated should be the date of commit-2 (first in the commits array)"
+        );
+    }
+
+    #[tokio::test]
+    async fn bulk_convert_populates_real_commits() {
+        let svc = post_service();
+        let post = svc.get_post("post-01").await.unwrap();
+        let commits = post.real_commits.unwrap();
+        assert_eq!(commits.len(), 1);
+        assert_eq!(commits[0].id, "commit-1");
+        assert_eq!(commits[0].subject, "First commit");
+    }
+
+    #[tokio::test]
+    async fn bulk_convert_preserves_commit_order() {
+        let svc = post_service();
+        // post-02 has commits in order ["commit-2","commit-1"]
+        let post = svc.get_post("post-02").await.unwrap();
+        let commits = post.real_commits.unwrap();
+        let ids: Vec<&str> = commits.iter().map(|c| c.id.as_str()).collect();
+        assert_eq!(ids, vec!["commit-2", "commit-1"]);
+    }
+
+    #[tokio::test]
+    async fn bulk_convert_no_commits_leaves_fields_none() {
+        let svc = post_service();
+        let post = svc.get_post("post-04").await.unwrap();
+        assert!(post.real_commits.is_none());
+        assert!(post.last_updated.is_none());
+    }
+}
