@@ -72,16 +72,19 @@ impl DbHandles {
 
                 // Now it should be safe to delete the underlying file.
                 if let Err(e) = fs::remove_file(&path).await {
-                    eprintln!("Failed to delete old DB file {path:?}: {e}");
+                    eprintln!("Failed to delete old DB file {}: {e}", path.display());
                 } else {
-                    println!("Deleted old DB file {path:?}");
+                    println!("Deleted old DB file {}", path.display());
                 }
 
                 break;
             }
             attempts += 1;
             if attempts > 60 {
-                eprintln!("Timeout draining old pool for {path:?}. File not deleted.");
+                eprintln!(
+                    "Timeout draining old pool for {}. File not deleted.",
+                    path.display()
+                );
                 break;
             }
             tokio::time::sleep(Duration::from_secs(10)).await;
