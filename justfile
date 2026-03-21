@@ -12,6 +12,10 @@ alias ar := auto-reload
 auto-reload:
   fd -t f -e rs -e html -e css | entr -r cargo run
 
+fmt:
+  cargo fmt
+  prettier --write "static/css/**/*.css" "templates/**/*.html"
+
 lint:
   cargo fmt
   cargo clippy --fix --bin "jonathansm" --allow-dirty -- -D clippy::correctness -W clippy::suspicious -W clippy::complexity -D clippy::perf -W clippy::style -W clippy::pedantic

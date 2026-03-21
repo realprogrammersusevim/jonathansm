@@ -1,0 +1,11 @@
+{
+  "plugins": ["/opt/homebrew/lib/node_modules/prettier-plugin-jinja-template/lib/index.js"],
+  "overrides": [
+    {
+      "files": ["*.html"],
+      "options": {
+        "parser": "jinja-template"
+      }
+    }
+  ]
+}
