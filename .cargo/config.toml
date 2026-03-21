@@ -1,5 +1,8 @@
 [target.aarch64-unknown-linux-musl]
 linker = "aarch64-linux-musl-ld"
 
-[target.x86_64-unknown-linux-gnu]
-linker = "x86_64-linux-gnu-gcc"
+[target.x86_64-unknown-linux-musl]
+linker = "x86_64-linux-musl-gcc"
+
+[env]
+CFLAGS_x86_64_unknown_linux_musl = "-Du_int8_t=uint8_t -Du_int16_t=uint16_t -Du_int32_t=uint32_t -Du_int64_t=uint64_t"
