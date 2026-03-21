@@ -1,28 +1,28 @@
-  /* Fonts */
+/* Fonts */
 @font-face {
-  font-family: 'fbb';
-  src: url('/static/fonts/fbb-Regular.woff2') format('woff2');
+  font-family: "fbb";
+  src: url("/static/fonts/fbb-Regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'fbb';
-  src: url('/static/fonts/fbb-Italic.woff2') format('woff2');
+  font-family: "fbb";
+  src: url("/static/fonts/fbb-Italic.woff2") format("woff2");
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
-  font-family: 'fbb';
-  src: url('/static/fonts/fbb-Bold.woff2') format('woff2');
+  font-family: "fbb";
+  src: url("/static/fonts/fbb-Bold.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'fbb';
-  src: url('/static/fonts/fbb-BoldItalic.woff2') format('woff2');
+  font-family: "fbb";
+  src: url("/static/fonts/fbb-BoldItalic.woff2") format("woff2");
   font-weight: 700;
   font-style: italic;
   font-display: swap;
@@ -30,9 +30,9 @@
 
 /* General Styles */
 :root {
-  --font-body: 'fbb', serif;
-  --font-heading: 'Lato', sans-serif;
-  --font-mono: 'Courier New', Courier, monospace;
+  --font-body: "fbb", serif;
+  --font-heading: "Lato", sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
 
   --color-bg: #fafaf8;
   --color-text: #333;
@@ -63,25 +63,25 @@
 }
 
 body {
-    font-family: var(--font-body); /* Classic serif font for readability */
-    font-size: 18px;
-    line-height: 1.7;
-    margin: 0;
-    padding: 0;
-    background-color: var(--color-bg); /* Light gray background */
-    color: var(--color-text); /* Dark gray for text */
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh; /* Full height for footer positioning */
+  font-family: var(--font-body); /* Classic serif font for readability */
+  font-size: 18px;
+  line-height: 1.7;
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg); /* Light gray background */
+  color: var(--color-text); /* Dark gray for text */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Full height for footer positioning */
 }
 
 header {
-    background: var(--color-white);
-    color: var(--color-text);
-    padding: var(--space-3) var(--space-5);
-    border-bottom: 1px solid var(--color-border-light);
-    width: 100%;
-    box-sizing: border-box;
+  background: var(--color-white);
+  color: var(--color-text);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-border-light);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Special case adjustment */
@@ -90,232 +90,240 @@ form:not(.nav-search-form) .search-box {
 }
 
 /* Use a clean sans-serif for headings */
-h1, h2, h3 {
-    font-family: var(--font-heading);
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
 }
 
 :where(h1) {
-    font-size: 2em;
-    margin-block: 0.67em;
+  font-size: 2em;
+  margin-block: 0.67em;
 }
 
-h1 a, h2 a, h3 a {
-    color: inherit;
-    text-decoration: none;
-    transition: color 0.15s ease;
+h1 a,
+h2 a,
+h3 a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
 }
 
-h1 a:hover, h2 a:hover, h3 a:hover {
-    color: var(--color-link); /* Change color on hover to indicate link */
-    text-decoration: none;
+h1 a:hover,
+h2 a:hover,
+h3 a:hover {
+  color: var(--color-link); /* Change color on hover to indicate link */
+  text-decoration: none;
 }
 
 /* Code styles */
 pre {
-    font-family: var(--font-mono);
-    background-color: var(--color-code-bg); /* slightly darker than #eee */
-    border: 1px solid var(--color-border);
-    padding: var(--space-2) var(--space-4);
-    border-radius: var(--radius-md);
-    overflow-x: auto; /* enable horizontal scroll for long lines */
-    -webkit-overflow-scrolling: touch;
-    line-height: 1.5;
-    margin: 1em 0;
+  font-family: var(--font-mono);
+  background-color: var(--color-code-bg); /* slightly darker than #eee */
+  border: 1px solid var(--color-border);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  overflow-x: auto; /* enable horizontal scroll for long lines */
+  -webkit-overflow-scrolling: touch;
+  line-height: 1.5;
+  margin: 1em 0;
 }
 
 /* Ensure inline code inside pre doesn't add extra styling */
 pre code {
-    background: transparent;
-    padding: 0;
-    border-radius: 0;
-    white-space: pre;
-    font-family: inherit;
-    color: inherit;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  white-space: pre;
+  font-family: inherit;
+  color: inherit;
 }
 
 /* Inline code */
 code {
-    font-family: var(--font-mono);
-    background-color: var(--color-inline-code-bg); /* slightly darker than previous #eee */
-    padding: 2px 4px;
-    border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  background-color: var(
+    --color-inline-code-bg
+  ); /* slightly darker than previous #eee */
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
 }
 
 header h1 {
-    margin: 0;
-    font-size: 24px; /* Larger title */
-    text-align: center;
+  margin: 0;
+  font-size: 24px; /* Larger title */
+  text-align: center;
 }
 
 header h1 a,
 header h1 a:link,
 header h1 a:visited {
-    color: inherit;
-    text-decoration: none;
+  color: inherit;
+  text-decoration: none;
 }
 
 header h1 a:hover {
-    color: inherit;
+  color: inherit;
 }
 
 nav {
-    text-align: center;
-    margin-top: 10px;
+  text-align: center;
+  margin-top: 10px;
 }
 
 nav a,
 nav a:link,
 nav a:visited {
-    color: var(--color-text); /* Match header text color */
-    margin: 0 15px;
-    text-decoration: none;
-    font-weight: normal; /* Less bold */
-    font-family: var(--font-heading)
+  color: var(--color-text); /* Match header text color */
+  margin: 0 15px;
+  text-decoration: none;
+  font-weight: normal; /* Less bold */
+  font-family: var(--font-heading);
 }
 
 a:link {
-    color: var(--color-link); /* Unvisited links: standard blue */
-    text-decoration: none;
+  color: var(--color-link); /* Unvisited links: standard blue */
+  text-decoration: none;
 }
 
 a:visited {
-    color: var(--color-visited); /* Visited links: standard purple */
-    text-decoration: none;
+  color: var(--color-visited); /* Visited links: standard purple */
+  text-decoration: none;
 }
 
-a:hover, nav a:hover {
-    text-decoration: underline; /* Underline on hover */
+a:hover,
+nav a:hover {
+  text-decoration: underline; /* Underline on hover */
 }
 
 main {
-    flex: 1;
-    padding: var(--space-5) var(--space-7);
-    max-width: var(--container-max);
-    margin: 20px auto;
-    width: 100%;
-    box-sizing: border-box;
-    background-color: var(--color-white);
-    border: 1px solid var(--color-border-light);
+  flex: 1;
+  padding: var(--space-5) var(--space-7);
+  max-width: var(--container-max);
+  margin: 20px auto;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border-light);
 }
 
 /* Post metadata (dates) */
 .post-meta {
-    font-size: 0.85em;
-    color: var(--color-muted);
-    margin: 2px 0 6px;
+  font-size: 0.85em;
+  color: var(--color-muted);
+  margin: 2px 0 6px;
 }
 
 /* Post titles on index page */
 article h2.post-title {
-    font-size: 1.4em;
-    margin-bottom: 2px;
-    border-bottom: none;
-    padding-bottom: 0;
+  font-size: 1.4em;
+  margin-bottom: 2px;
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 h2 {
-    border-bottom: 1px solid var(--color-border-light);
-    padding-bottom: 10px;
-    margin-top: 0;
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: 10px;
+  margin-top: 0;
 }
 
 /* Styling for post list on index page */
 main > ul {
-    list-style: none; /* Remove default list styles */
-    padding: 0;
+  list-style: none; /* Remove default list styles */
+  padding: 0;
 }
 
 main > ul > li {
-    background: none;
-    margin: 0; /* Space between posts */
-    padding: 25px 0; /* Padding inside post items */
-    border-radius: 0; /* Rounded corners */
-    border: none; /* Subtle border for separation */
-    border-bottom: 1px solid var(--color-border-light); /* Separator for posts */
-    transition: none;
+  background: none;
+  margin: 0; /* Space between posts */
+  padding: 25px 0; /* Padding inside post items */
+  border-radius: 0; /* Rounded corners */
+  border: none; /* Subtle border for separation */
+  border-bottom: 1px solid var(--color-border-light); /* Separator for posts */
+  transition: none;
 }
 
 main > ul > li:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 main > ul > li:hover {
-    border-color: transparent; /* Darken border on hover */
-    background-color: var(--color-hover-bg); /* Subtle hover effect */
+  border-color: transparent; /* Darken border on hover */
+  background-color: var(--color-hover-bg); /* Subtle hover effect */
 }
 
 h3 {
-    margin: 0;
-    font-size: 20px; /* Larger post title */
+  margin: 0;
+  font-size: 20px; /* Larger post title */
 }
 
 /* Quote component styles (figure.quote) */
 figure.quote {
-    margin: 20px 0;
-    padding: 0;
-    background: transparent;
+  margin: 20px 0;
+  padding: 0;
+  background: transparent;
 }
 
 figure.quote blockquote {
-    position: relative;
-    margin: 0;
-    color: #555;
-    font-style: italic;
-    border-left: 4px solid var(--color-border);
-    background-color: transparent;
-    padding: 10px 20px;
-    border-radius: 0;
+  position: relative;
+  margin: 0;
+  color: #555;
+  font-style: italic;
+  border-left: 4px solid var(--color-border);
+  background-color: transparent;
+  padding: 10px 20px;
+  border-radius: 0;
 }
 
 figure.quote figcaption {
-    font-style: normal;
-    margin-top: 10px;
-    color: var(--color-muted);
-    padding-left: 24px; /* align with blockquote text after border */
+  font-style: normal;
+  margin-top: 10px;
+  color: var(--color-muted);
+  padding-left: 24px; /* align with blockquote text after border */
 }
 
 /* Responsive images */
 img {
-    max-width: 100%;
-    height: auto;
-    border-radius: var(--radius-sm);
-    object-fit: cover;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
 }
 
 footer {
-    text-align: center;
-    padding: 20px;
-    background: var(--color-white);
-    color: var(--color-muted);
-    font-size: 0.85em;
-    position: relative;
-    margin-top: auto;
-    width: 100%;
-    border-top: 1px solid var(--color-border-light);
-    box-sizing: border-box;
+  text-align: center;
+  padding: 20px;
+  background: var(--color-white);
+  color: var(--color-muted);
+  font-size: 0.85em;
+  position: relative;
+  margin-top: auto;
+  width: 100%;
+  border-top: 1px solid var(--color-border-light);
+  box-sizing: border-box;
 }
 
 footer a:link,
 footer a:visited {
-    color: var(--color-mid);
+  color: var(--color-mid);
 }
 
 footer p {
-    margin: 0; /* Remove margin from footer text */
+  margin: 0; /* Remove margin from footer text */
 }
-
 
 /* Style for permalinks */
 p > a[href^="/post/"] {
-    font-size: 0.9em;
+  font-size: 0.9em;
 }
 
 p > a[href^="/post/"]:link {
-    color: var(--color-mid);
+  color: var(--color-mid);
 }
 
 p > a[href^="/post/"]:visited {
-    color: var(--color-visited);
+  color: var(--color-visited);
 }
 
 /* Search Form Styles */
@@ -367,99 +375,101 @@ p > a[href^="/post/"]:visited {
 
 /* Pagination Styles */
 .pagination {
-    text-align: center;
-    padding-top: 20px;
-    margin-top: 20px;
-    border-top: 1px solid var(--color-border-light);
+  text-align: center;
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: 1px solid var(--color-border-light);
 }
 
 .pagination a,
 .pagination span {
-    margin: 0 15px;
+  margin: 0 15px;
 }
 
 .pagination span {
-    color: var(--color-mid);
+  color: var(--color-mid);
 }
 
 /* Summary List Styles */
 .summary-list {
-    list-style: none;
-    padding: 0;
+  list-style: none;
+  padding: 0;
 }
 
 .summary-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .summary-item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .summary-title {
-    flex-grow: 1;
-    text-align: left;
+  flex-grow: 1;
+  text-align: left;
 }
 
 /* Tag pills */
 .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin: 4px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0;
 }
 
 .tags a {
-    background: var(--color-code-bg);
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-size: 0.85em;
-    color: var(--color-mid);
-    text-decoration: none;
+  background: var(--color-code-bg);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.85em;
+  color: var(--color-mid);
+  text-decoration: none;
 }
 
 .tags a:visited {
-    color: var(--color-mid);
+  color: var(--color-mid);
 }
 
 .tags a:hover {
-    text-decoration: none;
-    color: var(--color-text);
+  text-decoration: none;
+  color: var(--color-text);
 }
 
 /* Sidenote / Footnote styles */
 
 /* Reference marker styling */
 sup[id^="ref-"] {
-    font-size: 0.75em;
+  font-size: 0.75em;
 }
 
 /* Wide screens: show footnotes as sidenotes */
 @media (min-width: 80em) {
-    .sidenote {
-        float: right;            /* place in right margin */
-        clear: right;            /* stack notes */
-        width: 16rem;            /* adjust to match design */
-        /* keep the sidenote completely outside the main column with a wider gap */
-        margin-right: calc(-16rem - 3rem);    /* pull fully into right margin with a 3 rem gap */
-        margin-left: 2rem;       /* match the 2 rem gap from the main text */
-        font-size: 0.85em;
-        line-height: 1.25;
-    }
+  .sidenote {
+    float: right; /* place in right margin */
+    clear: right; /* stack notes */
+    width: 16rem; /* adjust to match design */
+    /* keep the sidenote completely outside the main column with a wider gap */
+    margin-right: calc(
+      -16rem - 3rem
+    ); /* pull fully into right margin with a 3 rem gap */
+    margin-left: 2rem; /* match the 2 rem gap from the main text */
+    font-size: 0.85em;
+    line-height: 1.25;
+  }
 }
 
 /* Narrow & medium screens: fall back to inline footnotes */
 @media (max-width: 79.99em) {
-    .sidenote {
-        display: block;
-        float: none;
-        clear: both;
-        width: auto;
-        margin: 0.5em 0;
-        font-size: 0.85em;
-        line-height: 1.25;
-    }
+  .sidenote {
+    display: block;
+    float: none;
+    clear: both;
+    width: auto;
+    margin: 0.5em 0;
+    font-size: 0.85em;
+    line-height: 1.25;
+  }
 }

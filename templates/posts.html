@@ -1,27 +1,23 @@
-{% extends "base.html" %}
-{% import "macros.html" as macros %}
-
+{% extends "base.html" %} {% import "macros.html" as macros %}
 {% block content %}
-<main>
-  <h2>All Posts</h2>
-  <ul class="summary-list">
-  {% for post in posts %}
-    {{ macros::summary_item(post=post) }}
-  {% endfor %}
-  </ul>
+  <main>
+    <h2>All Posts</h2>
+    <ul class="summary-list">
+      {% for post in posts %}{{ macros::summary_item(post=post) }}{% endfor %}
+    </ul>
 
-  {% if total_pages > 0 %}
-  <div class="pagination">
-      {% if current_page > 1 %}
+    {% if total_pages > 0 %}
+      <div class="pagination">
+        {% if current_page > 1 %}
           <a href="/posts?page={{ current_page - 1 }}">&laquo; Previous</a>
-      {% endif %}
+        {% endif %}
 
-      <span>Page {{ current_page }} of {{ total_pages }}</span>
+        <span>Page {{ current_page }} of {{ total_pages }}</span>
 
-      {% if current_page < total_pages %}
+        {% if current_page < total_pages %}
           <a href="/posts?page={{ current_page + 1 }}">Next &raquo;</a>
-      {% endif %}
-  </div>
-  {% endif %}
-</main>
+        {% endif %}
+      </div>
+    {% endif %}
+  </main>
 {% endblock content %}

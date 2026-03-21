@@ -1,127 +1,160 @@
 {% macro post(post, is_index=false) %}
-<article>
-  {% if is_index %}
-  <h2 class="post-title"><a href="/post/{{ post.id }}">{{ post.title }}</a></h2>
-  {% else %}
-  <h1>{{ post.title }}</h1>
-  {% endif %}
-  <p class="post-meta">{{ post.date | humandate }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated {{ post.last_updated | humandate }}{% endif %}{% endif %}</p>
-  {% if post.tags and post.tags | length > 0 %}
-  <div class="tags">
-      {% for tag in post.tags %}
-        <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>
-      {% endfor %}
-  </div>
-  {% endif %}
-  {% if is_index %}
-  {% set total_words = post.content | striptags | wordcount %}
-  <p class="post-excerpt">{{ post.content | striptags | truncate(length=500) }}<br><a href="/post/{{ post.id }}">Read more ({{ total_words }} words)</a></p>
-  {% else %}
-  <div>{{ post.content|safe }}</div>
-  {% endif %}
-</article>
-{% endmacro post %}
-
-{% macro link(post) %}
-<article>
-  {% set link_title = post.title | default(value=post.link) %}
-  <h3>
-    <a href="{{ post.link }}">{{ link_title }}</a>
-    {% if post.via %}
-    (<a href="{{ post.via }}">via</a>)
+  <article>
+    {% if is_index %}
+      <h2 class="post-title">
+        <a href="/post/{{ post.id }}">{{ post.title }}</a>
+      </h2>
+    {% else %}
+      <h1>{{ post.title }}</h1>
     {% endif %}
-  </h3>
-  <p class="post-meta">{{ post.date | humandate }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated {{ post.last_updated | humandate }}{% endif %}{% endif %}</p>
-  {% if post.tags and post.tags | length > 0 %}
-  <div class="tags">
-      {% for tag in post.tags %}
-        <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>
-      {% endfor %}
-  </div>
-  {% endif %}
-  <div>{{ post.content|safe }}</div>
-</article>
+    <p class="post-meta">
+      {{ post.date | humandate }}{% if post.last_updated %}{%
+        if post.last_updated
+        != post.date
+      %}
+        &middot; Updated {{ post.last_updated | humandate }}
+      {% endif %}{% endif %}
+    </p>
+    {% if post.tags and post.tags | length > 0 %}
+      <div class="tags">
+        {% for tag in post.tags %}
+          <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if is_index %}
+      {%
+        set total_words = post.content | striptags |
+        wordcount
+      %}
+      <p class="post-excerpt">
+        {{ post.content | striptags | truncate(length=500) }}<br /><a
+          href="/post/{{ post.id }}"
+          >Read more ({{ total_words }} words)</a
+        >
+      </p>
+    {% else %}
+      <div>{{ post.content|safe }}</div>
+    {% endif %}
+  </article>
+{% endmacro post %}
+{% macro link(post) %}
+  <article>
+    {% set link_title = post.title | default(value=post.link) %}
+    <h3>
+      <a href="{{ post.link }}">{{ link_title }}</a>
+      {% if post.via %}(<a href="{{ post.via }}">via</a>){% endif %}
+    </h3>
+    <p class="post-meta">
+      {{ post.date | humandate }}{% if post.last_updated %}{%
+        if post.last_updated
+        != post.date
+      %}
+        &middot; Updated {{ post.last_updated | humandate }}
+      {% endif %}{% endif %}
+    </p>
+    {% if post.tags and post.tags | length > 0 %}
+      <div class="tags">
+        {% for tag in post.tags %}
+          <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <div>{{ post.content|safe }}</div>
+  </article>
 {% endmacro link %}
-
 {% macro quote(post) %}
-<article>
-  <p class="post-meta">{{ post.date | humandate }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated {{ post.last_updated | humandate }}{% endif %}{% endif %}</p>
-  {% if post.tags and post.tags | length > 0 %}
-  <div class="tags">
-      {% for tag in post.tags %}
-        <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>
-      {% endfor %}
-  </div>
-  {% endif %}
-  <blockquote>
-    {{ post.content }}
-    <footer>{{ post.quote_author|display_some }}</footer>
-  </blockquote>
-</article>
+  <article>
+    <p class="post-meta">
+      {{ post.date | humandate }}{% if post.last_updated %}{%
+        if post.last_updated
+        != post.date
+      %}
+        &middot; Updated {{ post.last_updated | humandate }}
+      {% endif %}{% endif %}
+    </p>
+    {% if post.tags and post.tags | length > 0 %}
+      <div class="tags">
+        {% for tag in post.tags %}
+          <a href="/search?q=tag%3A{{ tag | urlencode }}">{{ tag }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <blockquote>
+      {{ post.content }}
+      <footer>{{ post.quote_author|display_some }}</footer>
+    </blockquote>
+  </article>
 {% endmacro quote %}
-
 {% macro commits(post) %}
-<details>
-  <summary>Changes</summary>
-  {% if post.real_commits %}
-  <ul>
-    {% for commit in post.real_commits %}
-    <li>
-      <p><b>{{ commit.subject }}</b></p>
-      <p><small>{{ commit.id }} {{ commit.date | humandate }}</small></p>
-      {% if commit.body %}
-      <p>{{ commit.body }}</p>
-      {% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-</details>
+  <details>
+    <summary>Changes</summary>
+    {% if post.real_commits %}
+      <ul>
+        {% for commit in post.real_commits %}
+          <li>
+            <p><b>{{ commit.subject }}</b></p>
+            <p><small>{{ commit.id }} {{ commit.date | humandate }}</small></p>
+            {% if commit.body %}
+              <p>{{ commit.body }}</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </details>
 {% endmacro commits %}
-
-{% macro render_post(post, is_index=false, show_permalink=false, show_commits=false, show_related=false) %}
-  {% if post.content_type == "Post" %}
+{%
+  macro render_post(post, is_index=false,
+  show_permalink=false, show_commits=false, show_related=false)
+%}
+  {%
+    if
+    post.content_type == "Post"
+  %}
     {{ self::post(post=post, is_index=is_index) }}
   {% elif post.content_type == "Link" %}
     {{ self::link(post=post) }}
-    {% if show_permalink %}<p><a href="/post/{{ post.id }}">Permalink</a></p>{% endif %}
+    {%
+      if
+      show_permalink
+    %}
+      <p><a href="/post/{{ post.id }}">Permalink</a></p>
+    {% endif %}
   {% elif post.content_type == "Quote" %}
     {{ self::quote(post=post) }}
-    {% if show_permalink %}<p><a href="/post/{{ post.id }}">Permalink</a></p>{% endif %}
+    {% if show_permalink %}
+      <p><a href="/post/{{ post.id }}">Permalink</a></p>
+    {% endif %}
   {% endif %}
-
   {% if not is_index %}
-    <hr>
+    <hr />
   {% endif %}
-
-  {% if show_commits %}
-    {{ self::commits(post=post) }}
-  {% endif %}
-
+  {% if show_commits %}{{ self::commits(post=post) }}{% endif %}
   {% if show_related and post.related_posts %}
-  <br>
-  <section class="related-posts">
-    <h3>Related Posts</h3>
-    {{ self::summary_list(summaries=post.related_posts) }}
-  </section>
+    <br />
+    <section class="related-posts">
+      <h3>Related Posts</h3>
+      {{ self::summary_list(summaries=post.related_posts) }}
+    </section>
   {% endif %}
 {% endmacro render_post %}
-
 {% macro summary_list(summaries) %}
   <ul class="summary-list">
-    {% for post in summaries %}
-      {{ self::summary_item(post=post) }}
-    {% endfor %}
+    {% for post in summaries %}{{ self::summary_item(post=post) }}{% endfor %}
   </ul>
 {% endmacro summary_list %}
-
 {% macro summary_item(post) %}
   <li class="summary-item">
     <div class="summary-title">
       {% if post.content_type == 'Link' %}
-        <a href="{{ post.link | safe }}">{{ post.title | default(value="Link") }} &rarr;</a>
+        <a href="{{ post.link | safe }}"
+          >{{ post.title | default(value="Link") }} &rarr;</a
+        >
       {% else %}
-        <a href="/post/{{ post.id }}">{{ post.title | default(value="Untitled") }}</a>
+        <a href="/post/{{ post.id }}"
+          >{{ post.title | default(value="Untitled") }}</a
+        >
       {% endif %}
     </div>
     <div class="summary-post-meta">

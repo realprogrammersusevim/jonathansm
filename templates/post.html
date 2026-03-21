@@ -1,8 +1,6 @@
-{% extends "base.html" %}
-{% import "macros.html" as macros %}
-
+{% extends "base.html" %} {% import "macros.html" as macros %}
 {% block content %}
-<main>
-  {{ macros::render_post(post=post, show_commits=true, show_related=true) }}
-</main>
+  <main>
+    {{ macros::render_post(post=post, show_commits=true, show_related=true) }}
+  </main>
 {% endblock %}

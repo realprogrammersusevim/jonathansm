@@ -1,44 +1,48 @@
-{% extends "base.html" %}
-{% import "macros.html" as macros %}
-
+{% extends "base.html" %} {% import "macros.html" as macros %}
 {% block header %}
-<meta name="robots" content="noindex, nofollow">
+  <meta name="robots" content="noindex, nofollow" />
 {% endblock %}
-
 {% block content %}
-<main>
-  <form action="/search" method="GET" class="search-form">
-    <input type="text" name="q" value="{{ query | default(value='') }}" placeholder="Search" class="search-box">
-  </form>
-  
-  {% if query %}
-    {% if total_results > 0 %}
-      <p>{{ total_results }} result{% if total_results != 1 %}s{% endif %} found</p>
+  <main>
+    <form action="/search" method="GET" class="search-form">
+      <input
+        type="text"
+        name="q"
+        value="{{ query | default(value='') }}"
+        placeholder="Search"
+        class="search-box"
+      />
+    </form>
 
-      {% if posts and posts | length > 0 %}
-        {{ macros::summary_list(summaries=posts) }}
-      {% endif %}
+    {% if query %}{% if total_results > 0 %}
+      <p>
+        {{ total_results }} result{% if total_results != 1 %}s{% endif %} found
+      </p>
 
+      {% if posts and posts | length > 0 %}{{ macros::summary_list(summaries=posts) }}{% endif %}
       {% if total_pages > 1 %}
-    <div class="pagination">
-      {% if current_page > 1 %}
-        <a href="/search?q={{ query | urlencode }}&page={{ current_page - 1 }}">
-          &laquo; Previous
-        </a>
-      {% endif %}
+        <div class="pagination">
+          {% if current_page > 1 %}
+            <a
+              href="/search?q={{ query | urlencode }}&page={{ current_page - 1 }}"
+            >
+              &laquo; Previous
+            </a>
+          {% endif %}
 
-      <span>Page {{ current_page }} of {{ total_pages }}</span>
+          <span>Page {{ current_page }} of {{ total_pages }}</span>
 
-      {% if current_page < total_pages %}
-        <a href="/search?q={{ query | urlencode }}&page={{ current_page + 1 }}">
-          Next &raquo;
-        </a>
-      {% endif %}
-    </div>
+          {% if current_page < total_pages %}
+            <a
+              href="/search?q={{ query | urlencode }}&page={{ current_page + 1 }}"
+            >
+              Next &raquo;
+            </a>
+          {% endif %}
+        </div>
       {% endif %}
     {% else %}
       <p>No results found for "{{ query }}"</p>
-    {% endif %}
-  {% endif %}
-</main>
+    {% endif %}{% endif %}
+  </main>
 {% endblock %}
