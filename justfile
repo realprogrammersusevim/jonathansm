@@ -3,7 +3,7 @@ set dotenv-load
 default: linux self
 
 linux:
-  cargo build --release --target=x86_64-unknown-linux-gnu
+  cargo build --release --target=x86_64-unknown-linux-musl
 
 self:
   cargo build --release
@@ -23,5 +23,5 @@ clean:
   cargo test
 
 deploy:
-  rsync -avzP target/x86_64-unknown-linux-gnu/release/jonathansm $DEPLOY_SERVER:$DEPLOY_PATH
+  rsync -avzP target/x86_64-unknown-linux-musl/release/jonathansm $DEPLOY_SERVER:$DEPLOY_PATH
   ssh -t "$DEPLOY_SERVER" "sudo systemctl restart jonathansm"
