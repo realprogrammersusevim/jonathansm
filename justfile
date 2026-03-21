@@ -10,7 +10,7 @@ self:
 
 alias ar := auto-reload
 auto-reload:
-  fd -t f -e rs -e html | entr -r cargo run
+  fd -t f -e rs -e html -e css | entr -r cargo run
 
 lint:
   cargo fmt
