@@ -3,8 +3,18 @@ use crate::services::image::ImageService;
 use anyhow::Result;
 use axum::response::{IntoResponse, Response};
 use rust_embed::RustEmbed;
+use std::collections::HashMap;
 use std::sync::Arc;
-use tera::{Context, Tera};
+use tera::{Context, Tera, Value};
+
+fn humandate_filter(value: &Value, _args: &HashMap<String, Value>) -> tera::Result<Value> {
+    let s = value
+        .as_str()
+        .ok_or_else(|| tera::Error::msg("humandate: expected a string"))?;
+    let date = chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+        .map_err(|e| tera::Error::msg(format!("humandate: invalid date '{s}': {e}")))?;
+    Ok(Value::String(date.format("%b. %-d, %Y").to_string()))
+}
 
 #[derive(Debug, Clone)]
 pub struct AppState {
@@ -49,6 +59,8 @@ impl AppState {
 
         tera.add_raw_templates(templates)
             .expect("Can't parse templates.");
+
+        tera.register_filter("humandate", humandate_filter);
 
         Ok(tera)
     }

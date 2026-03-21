@@ -5,7 +5,7 @@
   {% else %}
   <h1>{{ post.title }}</h1>
   {% endif %}
-  <p class="post-meta">{{ post.date }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated {{ post.last_updated }}{% endif %}{% endif %}</p>
+  <p class="post-meta">{{ post.date | humandate }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated {{ post.last_updated | humandate }}{% endif %}{% endif %}</p>
   {% if post.tags and post.tags | length > 0 %}
   <div class="tags">
       {% for tag in post.tags %}
@@ -31,7 +31,7 @@
     (<a href="{{ post.via }}">via</a>)
     {% endif %}
   </h3>
-  <p class="post-meta">{{ post.date }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated {{ post.last_updated }}{% endif %}{% endif %}</p>
+  <p class="post-meta">{{ post.date | humandate }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated {{ post.last_updated | humandate }}{% endif %}{% endif %}</p>
   {% if post.tags and post.tags | length > 0 %}
   <div class="tags">
       {% for tag in post.tags %}
@@ -45,7 +45,7 @@
 
 {% macro quote(post) %}
 <article>
-  <p class="post-meta">{{ post.date }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated {{ post.last_updated }}{% endif %}{% endif %}</p>
+  <p class="post-meta">{{ post.date | humandate }}{% if post.last_updated %}{% if post.last_updated != post.date %} &middot; Updated {{ post.last_updated | humandate }}{% endif %}{% endif %}</p>
   {% if post.tags and post.tags | length > 0 %}
   <div class="tags">
       {% for tag in post.tags %}
@@ -68,7 +68,7 @@
     {% for commit in post.real_commits %}
     <li>
       <p><b>{{ commit.subject }}</b></p>
-      <p><small>{{ commit.id }} {{ commit.date }}</small></p>
+      <p><small>{{ commit.id }} {{ commit.date | humandate }}</small></p>
       {% if commit.body %}
       <p>{{ commit.body }}</p>
       {% endif %}
@@ -125,7 +125,7 @@
       {% endif %}
     </div>
     <div class="summary-post-meta">
-      <time datetime="{{ post.date }}">{{ post.date }}</time>
+      <time datetime="{{ post.date }}">{{ post.date | humandate }}</time>
       {% if post.content_type == 'Link' or post.content_type == 'Quote' %}
         &middot;
         <a href="/post/{{ post.id }}">permalink</a>
