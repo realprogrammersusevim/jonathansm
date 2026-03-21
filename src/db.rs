@@ -104,17 +104,33 @@ pub fn init_pool(path: &Path) -> Result<Pool<SqliteConnectionManager>> {
 mod tests {
     use super::*;
     use rusqlite::Connection;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static TEST_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    fn unique_test_path() -> PathBuf {
+        let n = TEST_COUNTER.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!(
+            "jonathansm_db_swap_test_{}_{n}.db",
+            std::process::id()
+        ))
+    }
 
     fn make_temp_sqlite() -> PathBuf {
-        let path = std::env::temp_dir().join(format!(
-            "jonathansm_db_test_{}.db",
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .subsec_nanos()
-        ));
-        Connection::open(&path).unwrap(); // creates the file
+        let path = unique_test_path();
+        Connection::open(&path).unwrap();
         path
+    }
+
+    fn make_rw_pool(path: &Path) -> Pool<SqliteConnectionManager> {
+        let manager = SqliteConnectionManager::file(path);
+        Pool::builder().max_size(2).build(manager).unwrap()
+    }
+
+    fn make_temp_rw_db() -> (Pool<SqliteConnectionManager>, PathBuf) {
+        let path = make_temp_sqlite();
+        let pool = make_rw_pool(&path);
+        (pool, path)
     }
 
     #[test]
@@ -129,6 +145,75 @@ mod tests {
         let path = PathBuf::from("/nonexistent/path/no_such_file.db");
         let result = init_pool(&path);
         assert!(result.is_err(), "expected Err for nonexistent path");
+    }
+
+    #[tokio::test]
+    async fn swap_primary_updates_primary_path() {
+        let (old_pool, old_path) = make_temp_rw_db();
+        let db = DbHandles::new(old_pool, old_path);
+        let (new_pool, new_path) = make_temp_rw_db();
+
+        db.swap_primary(new_pool, new_path.clone()).await;
+
+        assert_eq!(*db.primary_path.read().await, new_path);
+    }
+
+    #[tokio::test]
+    async fn swap_primary_sets_draining_to_some() {
+        let (old_pool, old_path) = make_temp_rw_db();
+        let db = DbHandles::new(old_pool, old_path);
+        let (new_pool, new_path) = make_temp_rw_db();
+
+        db.swap_primary(new_pool, new_path).await;
+
+        assert!(db.draining.read().await.is_some());
+    }
+
+    #[tokio::test]
+    async fn swap_primary_new_pool_is_accessible() {
+        let (old_pool, old_path) = make_temp_rw_db();
+        let db = DbHandles::new(old_pool, old_path);
+        let (new_pool, new_path) = make_temp_rw_db();
+
+        db.swap_primary(new_pool, new_path).await;
+
+        assert!(db.primary.load().get().is_ok());
+    }
+
+    #[tokio::test]
+    async fn drain_clears_draining_field() {
+        let (old_pool, old_path) = make_temp_rw_db();
+        let db = DbHandles::new(old_pool, old_path);
+        let (new_pool, new_path) = make_temp_rw_db();
+
+        db.swap_primary(new_pool, new_path).await;
+
+        let deadline = std::time::Instant::now() + Duration::from_secs(2);
+        while db.draining.read().await.is_some() {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "draining field was never cleared"
+            );
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+    }
+
+    #[tokio::test]
+    async fn drain_deletes_old_file() {
+        let (old_pool, old_path) = make_temp_rw_db();
+        let db = DbHandles::new(old_pool, old_path.clone());
+        let (new_pool, new_path) = make_temp_rw_db();
+
+        db.swap_primary(new_pool, new_path).await;
+
+        let deadline = std::time::Instant::now() + Duration::from_secs(2);
+        while old_path.exists() && std::time::Instant::now() < deadline {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        assert!(
+            !old_path.exists(),
+            "old DB file was not deleted within timeout"
+        );
     }
 }
 
