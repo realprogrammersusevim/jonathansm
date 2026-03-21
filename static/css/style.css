@@ -34,16 +34,16 @@
   --font-heading: 'Lato', sans-serif;
   --font-mono: 'Courier New', Courier, monospace;
 
-  --color-bg: #f0f0f0;
+  --color-bg: #fafaf8;
   --color-text: #333;
   --color-white: #fff;
-  --color-border: #ddd;
+  --color-border: #e0e0e0;
   --color-border-light: #eee;
-  --color-code-bg: #e6e6e6;
-  --color-inline-code-bg: #e8e8e8;
-  --color-link: #0056b3;
-  --color-visited: #551A8B;
-  --color-muted: #777;
+  --color-code-bg: #f5f5f5;
+  --color-inline-code-bg: #f0f0f0;
+  --color-link: #2a5885;
+  --color-visited: #5a4a7a;
+  --color-muted: #888;
   --color-mid: #666;
   --color-hover-bg: #fafafa;
 
@@ -76,10 +76,10 @@ body {
 }
 
 header {
-    background: var(--color-white); /* White header */
+    background: var(--color-white);
     color: var(--color-text);
     padding: var(--space-3) var(--space-5);
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border-light);
     width: 100%;
     box-sizing: border-box;
 }
@@ -188,19 +188,34 @@ a:hover, nav a:hover {
 }
 
 main {
-    flex: 1; /* Allow main to grow and push footer down */
+    flex: 1;
     padding: var(--space-5) var(--space-7);
-    max-width: var(--container-max); /* Optimal for reading */
-    margin: 20px auto; /* Center the main section with some top/bottom margin */
-    background-color: var(--color-white); /* White "page" for content */
-    border: 1px solid var(--color-border);
+    max-width: var(--container-max);
+    margin: 20px auto;
     width: 100%;
     box-sizing: border-box;
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border-light);
+}
+
+/* Post metadata (dates) */
+.post-meta {
+    font-size: 0.85em;
+    color: var(--color-muted);
+    margin: 2px 0 6px;
+}
+
+/* Post titles on index page */
+article h2.post-title {
+    font-size: 1.4em;
+    margin-bottom: 2px;
+    border-bottom: none;
+    padding-bottom: 0;
 }
 
 h2 {
-    border-bottom: 1px solid var(--color-border-light); /* Lighter, more minimal border */
-    padding-bottom: 10px; /* Space between heading and content */
+    border-bottom: 1px solid var(--color-border-light);
+    padding-bottom: 10px;
     margin-top: 0;
 }
 
@@ -270,13 +285,19 @@ img {
 footer {
     text-align: center;
     padding: 20px;
-    background: var(--color-white); /* Match header */
-    color: var(--color-text); /* Match header */
-    position: relative; /* Allows footer to sit properly */
-    margin-top: auto; /* Pushes footer to the bottom */
-    width: 100%; /* Full width */
-    border-top: 1px solid var(--color-border); /* Subtle border */
+    background: var(--color-white);
+    color: var(--color-muted);
+    font-size: 0.85em;
+    position: relative;
+    margin-top: auto;
+    width: 100%;
+    border-top: 1px solid var(--color-border-light);
     box-sizing: border-box;
+}
+
+footer a:link,
+footer a:visited {
+    color: var(--color-mid);
 }
 
 footer p {
