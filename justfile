@@ -26,6 +26,6 @@ test:
 clean:
   cargo test
 
-deploy:
+deploy: linux
   rsync -avzP target/x86_64-unknown-linux-musl/release/jonathansm $DEPLOY_SERVER:$DEPLOY_PATH
   ssh -t "$DEPLOY_SERVER" "sudo systemctl restart jonathansm"
