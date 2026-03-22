@@ -502,3 +502,8 @@ sup[id^="ref-"] {
     line-height: 1.25;
   }
 }
+
+/* Opt in to cross-document view transitions */
+@view-transition {
+  navigation: auto;
+}
