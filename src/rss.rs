@@ -92,6 +92,7 @@ mod tests {
             content: "<p>Body text</p>".to_string(),
             commits: None,
             tags: None,
+            description: None,
             real_commits: None,
             related_posts: None,
         }

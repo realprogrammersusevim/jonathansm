@@ -48,6 +48,8 @@ impl PostService {
         let tags_str: Option<String> = row.get("tags")?;
         let tags = tags_str.and_then(|s| serde_json::from_str(&s).ok());
 
+        let description: Option<String> = row.get("description")?;
+
         Ok(Post {
             id,
             content_type,
@@ -60,6 +62,7 @@ impl PostService {
             content,
             commits,
             tags,
+            description,
             real_commits: None,
             related_posts: None,
         })

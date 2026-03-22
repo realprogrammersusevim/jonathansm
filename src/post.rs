@@ -49,6 +49,7 @@ pub struct Post {
     #[serde(skip_serializing)]
     pub commits: Option<Vec<String>>,
     pub tags: Option<Vec<String>>,
+    pub description: Option<String>,
     pub real_commits: Option<Vec<Commit>>,
     pub related_posts: Option<Vec<SummaryPost>>,
 }

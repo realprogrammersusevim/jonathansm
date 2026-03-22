@@ -24,7 +24,8 @@ CREATE TABLE posts (
     date TEXT NOT NULL,
     content TEXT NOT NULL DEFAULT '',
     commits TEXT,
-    tags TEXT
+    tags TEXT,
+    description TEXT
 );
 CREATE TABLE commits (
     id TEXT PRIMARY KEY,
@@ -76,6 +77,7 @@ pub fn seed(conn: &Connection) {
         &str,
         Option<&str>,
         Option<&str>,
+        Option<&str>,
     )] = &[
         (
             "post-01",
@@ -88,6 +90,7 @@ pub fn seed(conn: &Connection) {
             "link post content",
             Some(r#"["commit-1"]"#),
             Some(r#"["rust","web"]"#),
+            Some("A post about Rust and the web."),
         ),
         (
             "post-02",
@@ -100,6 +103,7 @@ pub fn seed(conn: &Connection) {
             "quoted text here",
             Some(r#"["commit-2","commit-1"]"#),
             Some(r#"["rust"]"#),
+            None,
         ),
         (
             "post-03",
@@ -112,6 +116,7 @@ pub fn seed(conn: &Connection) {
             "golang article about performance",
             None,
             Some(r#"["go"]"#),
+            Some("An article about Go and performance."),
         ),
         (
             "post-04",
@@ -122,6 +127,7 @@ pub fn seed(conn: &Connection) {
             None,
             "2024-01-09T00:00:00Z",
             "regular post",
+            None,
             None,
             None,
         ),
@@ -136,6 +142,7 @@ pub fn seed(conn: &Connection) {
             "regular post",
             None,
             None,
+            None,
         ),
         (
             "post-06",
@@ -146,6 +153,7 @@ pub fn seed(conn: &Connection) {
             None,
             "2024-01-07T00:00:00Z",
             "regular post",
+            None,
             None,
             None,
         ),
@@ -160,6 +168,7 @@ pub fn seed(conn: &Connection) {
             "regular post",
             None,
             None,
+            None,
         ),
         (
             "post-08",
@@ -170,6 +179,7 @@ pub fn seed(conn: &Connection) {
             None,
             "2024-01-05T00:00:00Z",
             "regular post",
+            None,
             None,
             None,
         ),
@@ -184,6 +194,7 @@ pub fn seed(conn: &Connection) {
             "regular post",
             None,
             None,
+            None,
         ),
         (
             "post-10",
@@ -194,6 +205,7 @@ pub fn seed(conn: &Connection) {
             None,
             "2024-01-03T00:00:00Z",
             "regular post",
+            None,
             None,
             None,
         ),
@@ -208,6 +220,7 @@ pub fn seed(conn: &Connection) {
             "regular post",
             None,
             None,
+            None,
         ),
         (
             "post-12",
@@ -218,6 +231,7 @@ pub fn seed(conn: &Connection) {
             None,
             "2024-01-01T00:00:00Z",
             "regular post",
+            None,
             None,
             None,
         ),
@@ -232,14 +246,15 @@ pub fn seed(conn: &Connection) {
             "about page content",
             None,
             None,
+            None,
         ),
     ];
 
-    for (id, ct, title, link, via, qa, date, content, commits, tags) in posts {
+    for (id, ct, title, link, via, qa, date, content, commits, tags, description) in posts {
         conn.execute(
-            "INSERT INTO posts(id,content_type,title,link,via,quote_author,date,content,commits,tags)
-             VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)",
-            rusqlite::params![id, ct, title, link, via, qa, date, content, commits, tags],
+            "INSERT INTO posts(id,content_type,title,link,via,quote_author,date,content,commits,tags,description)
+             VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
+            rusqlite::params![id, ct, title, link, via, qa, date, content, commits, tags, description],
         )
         .unwrap();
 

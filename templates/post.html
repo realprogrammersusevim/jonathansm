@@ -1,4 +1,11 @@
 {% extends "base.html" %} {% import "macros.html" as macros %}
+{% block meta %}{% if post.description %}<meta
+  name="description"
+  content="{{ post.description }}"
+/>{% else %}<meta
+  name="description"
+  content="Jonathan Milligan's blog — writing on software, technology, and ideas."
+/>{% endif %}{% endblock %}
 {% block content %}
   <main>
     {{ macros::render_post(post=post, show_commits=true, show_related=true) }}
