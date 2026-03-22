@@ -11,8 +11,29 @@
         value="{{ query | default(value='') }}"
         placeholder="Search"
         class="search-box"
+        autofocus
       />
     </form>
+
+    {% if not query %}
+      <div class="search-hints">
+        <p>Try searching for a topic, or filter with:</p>
+        <ul>
+          <li><code>tag:rust</code> &mdash; filter by tag</li>
+          <li>
+            <code>type:post</code> &mdash; filter by type (post, link, quote)
+          </li>
+          <li>
+            <code>from:{{ now() | date(format="%Y") }}-01-01</code> &mdash;
+            posts after a date
+          </li>
+          <li>
+            <code>to:{{ now() | date(format="%Y") }}-12-31</code> &mdash; posts
+            before a date
+          </li>
+        </ul>
+      </div>
+    {% endif %}
 
     {% if query %}{% if total_results > 0 %}
       <p>
