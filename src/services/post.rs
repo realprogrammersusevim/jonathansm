@@ -8,6 +8,32 @@ use std::sync::Arc;
 use tokio::task;
 use tracing;
 
+#[derive(Debug, Clone, Copy)]
+enum PostKind {
+    Regular,
+    Special,
+}
+
+impl PostKind {
+    fn sql_filter(self) -> &'static str {
+        match self {
+            Self::Regular => "content_type != 'special'",
+            Self::Special => "content_type = 'special'",
+        }
+    }
+
+    fn not_found_msg(self) -> &'static str {
+        match self {
+            Self::Regular => "Post not found",
+            Self::Special => "Special page not found",
+        }
+    }
+
+    fn has_related_posts(self) -> bool {
+        matches!(self, Self::Regular)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct PostService {
     db: Arc<DbHandles>,
@@ -129,21 +155,15 @@ impl PostService {
         Ok((posts, page, total_pages))
     }
 
-    async fn get_post_by_id_internal(
-        &self,
-        id: &str,
-        content_type_sql: &str,
-        not_found_msg: &str,
-    ) -> Result<Post> {
+    async fn get_post_by_id_internal(&self, id: &str, kind: PostKind) -> Result<Post> {
         let id_owned = id.to_owned();
-        let query_sql = format!("SELECT * FROM posts WHERE id = ? AND {content_type_sql}");
-        let not_found_msg_owned = not_found_msg.to_owned();
+        let query_sql = format!("SELECT * FROM posts WHERE id = ? AND {}", kind.sql_filter());
 
         self.run_db_query(move |conn| {
             conn.query_row(&query_sql, [&id_owned], Self::row_to_post)
                 .map_err(|e| match e {
                     rusqlite::Error::QueryReturnedNoRows => {
-                        anyhow::anyhow!("{}: {}", not_found_msg_owned, id_owned)
+                        anyhow::anyhow!("{}: {}", kind.not_found_msg(), id_owned)
                     }
                     _ => e.into(),
                 })
@@ -151,31 +171,66 @@ impl PostService {
         .await
     }
 
-    pub async fn get_post(&self, id: &str) -> Result<Post> {
-        let query = self
-            .get_post_by_id_internal(id, "content_type != 'special'", "Post not found")
-            .await?;
+    async fn get_full_post(&self, id: &str, kind: PostKind) -> Result<Post> {
+        let query = self.get_post_by_id_internal(id, kind).await?;
         let mut post = self.convert_to_post(query).await?;
 
-        match self.get_related_posts(&post.id).await {
-            Ok(related_posts) => {
-                if !related_posts.is_empty() {
+        if let Err(e) = self.attach_diffs(&mut post).await {
+            tracing::error!("Failed to get diffs for {}: {}", post.id, e);
+        }
+
+        if kind.has_related_posts() {
+            match self.get_related_posts(&post.id).await {
+                Ok(related_posts) if !related_posts.is_empty() => {
                     post.related_posts = Some(related_posts);
                 }
-            }
-            Err(e) => {
-                tracing::error!("Failed to get related posts for {}: {}", post.id, e);
+                Ok(_) => {}
+                Err(e) => {
+                    tracing::error!("Failed to get related posts for {}: {}", post.id, e);
+                }
             }
         }
 
         Ok(post)
     }
 
+    pub async fn get_post(&self, id: &str) -> Result<Post> {
+        self.get_full_post(id, PostKind::Regular).await
+    }
+
     pub async fn get_special_page(&self, id: &str) -> Result<Post> {
-        let query = self
-            .get_post_by_id_internal(id, "content_type = 'special'", "Special page not found")
+        self.get_full_post(id, PostKind::Special).await
+    }
+
+    async fn attach_diffs(&self, post: &mut Post) -> Result<()> {
+        if post.real_commits.as_ref().is_none_or(Vec::is_empty) {
+            return Ok(());
+        }
+        let id = post.id.clone();
+
+        let mut diffs: HashMap<String, String> = self
+            .run_db_query(move |conn| {
+                // Databases built before diffs were added have no `post_diffs` table.
+                let has_table: bool = conn.query_row(
+                    "SELECT EXISTS (SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'post_diffs')",
+                    [],
+                    |row| row.get(0),
+                )?;
+                if !has_table {
+                    return Ok(HashMap::new());
+                }
+                let mut stmt =
+                    conn.prepare("SELECT commit_id, diff FROM post_diffs WHERE post_id = ?")?;
+                let rows = stmt.query_map([&id], |row| Ok((row.get(0)?, row.get(1)?)))?;
+                rows.collect::<rusqlite::Result<HashMap<_, _>>>()
+                    .map_err(anyhow::Error::from)
+            })
             .await?;
-        self.convert_to_post(query).await
+
+        for commit in post.real_commits.iter_mut().flatten() {
+            commit.diff = diffs.remove(&commit.id);
+        }
+        Ok(())
     }
 
     async fn get_related_posts(&self, id: &str) -> Result<Vec<SummaryPost>> {
@@ -316,6 +371,7 @@ impl PostService {
                             date: row.get(1)?,
                             subject: row.get(2)?,
                             body: row.get(3)?,
+                            diff: None,
                         })
                     },
                 )?;
@@ -485,6 +541,26 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn get_special_page_attaches_diffs() {
+        let svc = post_service();
+        let post = svc.get_special_page("about").await.unwrap();
+        let commits = post.real_commits.unwrap();
+        assert_eq!(commits[0].id, "commit-2");
+        assert!(commits[0]
+            .diff
+            .as_deref()
+            .unwrap()
+            .contains("<ins>me</ins>"));
+    }
+
+    #[tokio::test]
+    async fn get_special_page_has_no_related_posts() {
+        let svc = post_service();
+        let post = svc.get_special_page("about").await.unwrap();
+        assert!(post.related_posts.is_none());
+    }
+
+    #[tokio::test]
     async fn get_special_page_cannot_fetch_regular_post() {
         let svc = post_service();
         let err = svc.get_special_page("post-01").await.unwrap_err();
@@ -526,6 +602,42 @@ mod tests {
         let commits = post.real_commits.unwrap();
         let ids: Vec<&str> = commits.iter().map(|c| c.id.as_str()).collect();
         assert_eq!(ids, vec!["commit-2", "commit-1"]);
+    }
+
+    #[tokio::test]
+    async fn get_post_attaches_diffs_to_editing_commits() {
+        let svc = post_service();
+        // post-02: commit-2 edited the post (has a diff), commit-1 created it (none)
+        let post = svc.get_post("post-02").await.unwrap();
+        let commits = post.real_commits.unwrap();
+        assert_eq!(commits[0].id, "commit-2");
+        assert!(commits[0]
+            .diff
+            .as_deref()
+            .unwrap()
+            .contains("<ins>new</ins>"));
+        assert_eq!(commits[1].id, "commit-1");
+        assert!(commits[1].diff.is_none());
+    }
+
+    #[tokio::test]
+    async fn get_post_diff_is_scoped_to_the_post() {
+        let svc = post_service();
+        // post-01 shares commit-1 with post-02 but has no diff rows of its own
+        let post = svc.get_post("post-01").await.unwrap();
+        assert!(post.real_commits.unwrap()[0].diff.is_none());
+    }
+
+    #[tokio::test]
+    async fn get_post_without_post_diffs_table_still_works() {
+        let (db, path) = test_db();
+        rusqlite::Connection::open(&path)
+            .unwrap()
+            .execute_batch("DROP TABLE post_diffs;")
+            .unwrap();
+        let svc = PostService::new(db);
+        let post = svc.get_post("post-02").await.unwrap();
+        assert!(post.real_commits.unwrap().iter().all(|c| c.diff.is_none()));
     }
 
     #[tokio::test]

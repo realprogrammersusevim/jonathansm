@@ -98,6 +98,7 @@
             {% if commit.body %}
               <p>{{ commit.body }}</p>
             {% endif %}
+            {% if commit.diff %}{{ commit.diff | safe }}{% endif %}
           </li>
         {% endfor %}
       </ul>

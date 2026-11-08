@@ -46,6 +46,10 @@
   --color-muted: #888;
   --color-mid: #666;
   --color-hover-bg: #fafafa;
+  --color-diff-del: #8f2a2a;
+  --color-diff-del-bg: #fbe9e7;
+  --color-diff-ins: #1d5e35;
+  --color-diff-ins-bg: #e3f2e7;
 
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -506,4 +510,37 @@ sup[id^="ref-"] {
 /* Opt in to cross-document view transitions */
 @view-transition {
   navigation: auto;
+}
+
+/* Commit diffs: word-level changes shown under each commit */
+.diff {
+  margin: var(--space-1) 0;
+  padding-left: var(--space-2);
+  border-left: 3px solid var(--color-border);
+  font-size: 0.9em;
+}
+
+.diff p {
+  margin: 0.4em 0;
+  overflow-wrap: anywhere;
+}
+
+.diff-hunk + .diff-hunk {
+  margin-top: var(--space-1);
+  padding-top: var(--space-1);
+  border-top: 1px dashed var(--color-border);
+}
+
+.diff del {
+  color: var(--color-diff-del);
+  background-color: var(--color-diff-del-bg);
+}
+
+.diff ins {
+  color: var(--color-diff-ins);
+  background-color: var(--color-diff-ins-bg);
+}
+
+.diff-elided {
+  color: var(--color-muted);
 }

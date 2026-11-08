@@ -70,14 +70,7 @@ pub async fn about(state: State<AppState>) -> Response {
 }
 
 pub async fn contact(state: State<AppState>) -> Response {
-    match state.post_service.get_special_page("contact").await {
-        Ok(post) => {
-            let mut context = Context::new();
-            context.insert("post", &post);
-            state.render("post.html", &context).unwrap()
-        }
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-    }
+    handle_special_page(state, "contact").await
 }
 
 pub async fn get_image(Path(id): Path<String>, state: State<AppState>) -> impl IntoResponse {

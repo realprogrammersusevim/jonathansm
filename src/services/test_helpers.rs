@@ -42,12 +42,19 @@ CREATE TABLE images (
     filename TEXT PRIMARY KEY,
     data BLOB NOT NULL
 );
+CREATE TABLE post_diffs (
+    post_id TEXT NOT NULL,
+    commit_id TEXT NOT NULL,
+    diff TEXT NOT NULL,
+    PRIMARY KEY (post_id, commit_id)
+);
 ";
 
 /// Seed a connection with a canonical set of test data:
 ///  - 12 regular posts (post-01 … post-12) dated 2024-01-12 → 2024-01-01
 ///  - 1 special page  (id = "about")
-///  - 2 commits referenced by post-01 and post-02
+///  - 2 commits referenced by post-01, post-02, and about
+///  - 2 diffs: commit-2's edits to post-02 and the about page
 ///  - 1 image  (images/test.png)
 ///
 /// post-01: link type,  tags ["rust","web"], commits ["commit-1"]
@@ -244,7 +251,7 @@ pub fn seed(conn: &Connection) {
             None,
             "2023-01-01T00:00:00Z",
             "about page content",
-            None,
+            Some(r#"["commit-2"]"#),
             None,
             None,
         ),
@@ -267,6 +274,14 @@ pub fn seed(conn: &Connection) {
             .unwrap();
         }
     }
+
+    // -- diffs --
+    conn.execute_batch(
+        "INSERT INTO post_diffs VALUES
+            ('post-02','commit-2','<div class=\"diff\"><div class=\"diff-hunk\"><p><del>old</del> <ins>new</ins></p></div></div>'),
+            ('about','commit-2','<div class=\"diff\"><div class=\"diff-hunk\"><p>about <ins>me</ins></p></div></div>');",
+    )
+    .unwrap();
 
     // -- image --
     conn.execute(

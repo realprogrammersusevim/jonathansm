@@ -6,6 +6,7 @@ pub struct Commit {
     pub date: String,
     pub subject: String,
     pub body: Option<String>,
+    pub diff: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize)]
