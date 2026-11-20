@@ -31,17 +31,10 @@ impl From<Post> for RssEntry {
                 (title, format!("{}{}", link_html, post.content))
             }
             ContentType::Quote => {
+                // Quotes are untitled; the content already carries its own
+                // <figure class="quote"> markup and attribution from the builder.
                 let author = post.quote_author.as_deref().unwrap_or("an unknown source");
-                let title = post
-                    .title
-                    .clone()
-                    .unwrap_or_else(|| format!("Quote from {author}"));
-                let attribution = post.quote_author.map_or_else(String::new, |name| {
-                    format!("<figcaption>— {name}</figcaption>")
-                });
-                let blockquote =
-                    format!("<blockquote>{}</blockquote>{}", post.content, attribution);
-                (title, blockquote)
+                (format!("Quote from {author}"), post.content)
             }
         };
 
@@ -129,11 +122,14 @@ mod tests {
         let mut post = base_post(ContentType::Quote);
         post.title = None;
         post.quote_author = Some("Alice".to_string());
-        let entry = RssEntry::from(post);
+        post.content = "<figure class=\"quote\"><blockquote><p>Hi</p></blockquote>\
+                        <figcaption>— Alice</figcaption></figure>"
+            .to_string();
+        let entry = RssEntry::from(post.clone());
         assert_eq!(entry.title, "Quote from Alice");
-        assert!(entry.content.contains("<blockquote>"));
-        assert!(entry.content.contains("<figcaption>"));
-        assert!(entry.content.contains("Alice"));
+        // Content passes through unwrapped, so the attribution appears once.
+        assert_eq!(entry.content, post.content);
+        assert_eq!(entry.content.matches("Alice").count(), 1);
     }
 
     #[test]

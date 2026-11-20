@@ -102,7 +102,7 @@ pub fn seed(conn: &Connection) {
         (
             "post-02",
             "quote",
-            Some("Wise Words"),
+            None,
             None,
             None,
             Some("Alice"),
